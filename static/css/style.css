@@ -66,6 +66,11 @@ a {
   z-index: 9999999;
 }
 
+.text_edge{
+  color:#f25b00;
+  /* color: #6f6486; */
+}
+
 .sidebar .close-aside {
   position: absolute;
   top: 7px;
@@ -139,6 +144,15 @@ a {
 .navbar {
   border: none;
   background-color: var(--navbar-bg-color);
+}
+
+.bg-navbar{
+  /* background: linear-gradient(#F5F5F5, #FFFFFF); */
+  /* background: #2F4F4F; */
+  background: #212529;
+  /* border: 1px solid #E0E0E0; */
+  
+
 }
 
 .navbar .dropdown-menu {

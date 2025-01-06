@@ -15,7 +15,7 @@ STATUS_CHOICES = [
 ]
 
 ROLE_CHOICES = [
-    ('OP', 'Operative'),
+    ('ST', 'Staff'),
     ('EX', 'Executive'),
     ('AD', 'Admin')
 ]

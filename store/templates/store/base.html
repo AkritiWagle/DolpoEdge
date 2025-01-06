@@ -11,7 +11,7 @@
         <link rel="stylesheet" type="text/css" href="https://unpkg.com/@webpixels/css@1.1.5/dist/index.css">
         <link rel="stylesheet" href="{% static 'css/style.css' %}" type="text/css">
         {% block stylesheets %}{% endblock stylesheets %}
-        <title>IMS: {% block title %} {% endblock title %}</title>
+        <title>DolpoEdge: {% block title %} {% endblock title %}</title>
 
         <!-- Favicon -->
         <link rel="icon" href="{% static 'images/logo/favicon.png' %}" type="image/png">
@@ -26,13 +26,14 @@
       </style>
         {% include "store/sidebar.html" %}
         <section id="wrapper">
-            <nav class="navbar navbar-expand-md bg-success">
+            <nav class="navbar navbar-expand-md bg-navbar">
                 <div class="container-fluid mx-2">
                   <div class="navbar-header">
                     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#toggle-navbar" aria-controls="toggle-navbar" aria-expanded="false" aria-label="Toggle navigation">
                       <i class="fa fa-bars text-white"></i>
                     </button>
-                    <a class="navbar-brand" style="font-size: 20px;" href="{% url 'dashboard' %}">Inventory<span class="text-warning">ms</span></a>
+                    <img src="{% static 'images/logo/dolpo_logo_small.png' %}" alt="Dolpo Logo" style="width: 140px; height: auto;">
+                    <a class="navbar-brand" style="font-size: 20px;" href="{% url 'dashboard' %}">Dolpo<span class="text_edge">Edge</span></a>
                   </div>
                   <div class="collapse navbar-collapse" id="toggle-navbar">
                     <ul class="navbar-nav ms-auto">
