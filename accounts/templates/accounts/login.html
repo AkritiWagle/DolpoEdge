@@ -12,11 +12,17 @@
       width: 360px;
       padding: 8% 0 0;
       margin: auto;
+
     }
+    .text_edge{
+       color:#f25b00;
+  /* color: #6f6486; */
+    }
+
     .form {
       position: relative;
       z-index: 1;
-      background: #FFFFFF;
+      background: #212529;
       max-width: 360px;
       margin: 0 auto 100px;
       padding: 45px;
@@ -25,7 +31,7 @@
     }
     .form input {
       outline: 0;
-      background: #bbffbb;
+      /* background: #bbffbb; */
       width: 100%;
       border: 0;
       margin: 0 0 15px;
@@ -95,16 +101,19 @@
       color: #EF3B3A;
     }
     body {
-      background: #76b852; /* fallback for old browsers */
-      background: rgb(141,194,111);
-      background: linear-gradient(90deg, rgba(141,194,111,1) 0%, rgba(118,184,82,1) 50%);
+      /* background:76b852; fallback for old browsers */
+      /* background: #212529; */
+      /* background: linear-gradient(90deg, rgba(141,194,111,1) 0%, rgba(118,184,82,1) 50%); */
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
     }
+    
+
+
     </style>
     <div class="form">
       <div>
-        <strong class="navbar-brand" style="font-size: 26px;">Inventory<span class="text-warning">ms</span></strong>
+        <strong class="navbar-brand" style="font-size: 26px; color: #FFFFFF;">Dolpo<span class="text_edge">Edge</span></strong>
       </div>
       <div class="text-danger">
         {% if messages %} {% for message in messages %}
@@ -121,7 +130,7 @@
         </ul>
     {% endif %}
   </div>
-      <form class="login-form" method="POST">
+      <form class="login-form" style="color: #FFFFFF;" method="POST">
         {% csrf_token %}
         <p>{{ message }}</p>
         <label>Username</label>
@@ -130,7 +139,7 @@
         <label>Password</label>
         <span class="text-danger">{{ form.password.errors }}</span>
         {{form.password}}
-        <button  type="submit" name="button">login</button>
+        <button  type="submit" name="button">Login</button>
         <p class="message">Not registered? <a href="{% url 'user-register' %}">Create an account</a></p>
       </form>
     </div>
