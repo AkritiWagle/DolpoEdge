@@ -23,6 +23,23 @@
           display: flex;
           justify-content: center;
         }
+        .bell-icon i {
+          font-size: 20px;
+          max-height: 93px;
+          color: white;
+          transition: color 0.3s ease, transform 0.3s ease;
+          line-height: 1; /* Prevent extra spacing */
+        }
+        .navbar .nav-item {
+          height: 100%;
+          display: flex;
+          align-items: center;
+        }
+
+        .bell-icon i:hover {
+          color: #f25b00;
+          transform: scale(1.2);
+        } 
       </style>
         {% include "store/sidebar.html" %}
         <section id="wrapper">
@@ -45,6 +62,15 @@
                           <i data-show="show-side-navigation1" class="fa fa-bars show-side-btn"></i>
                         </a>
                       </li> {% endcomment %}
+                    </ul>
+                  </div>
+                  <div class="collapse navbar-collapse" style="height: 76px;" id="toggle-navbar">
+                    <ul class="navbar-nav ms-auto">
+                      <li class="nav-item">
+                        <a class="nav-link bell-icon" href="#">
+                          <i class="fa fa-bell"></i>
+                        </a>
+                      </li>
                     </ul>
                   </div>
                 </div>
