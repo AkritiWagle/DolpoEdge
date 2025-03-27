@@ -22,17 +22,19 @@ from .views import (
     CategoryDetailView,
     CategoryCreateView,
     CategoryUpdateView,
-    CategoryDeleteView
+    CategoryDeleteView,
+    notifications
 )
 
 # URL patterns
 urlpatterns = [
     # Dashboard
     path('', views.dashboard, name='dashboard'),
+    path('notifications/', notifications, name='notifications'),
 
     # Product URLs
     path(
-        'products/',
+        'products/',    
         ProductListView.as_view(),
         name='productslist'
     ),
@@ -124,6 +126,7 @@ urlpatterns = [
         CategoryDeleteView.as_view(),
         name='category-delete'
     ),
+    
 ]
 
 # Static media files configuration for development

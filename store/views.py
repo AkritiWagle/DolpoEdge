@@ -91,6 +91,11 @@ def dashboard(request):
     }
     return render(request, "store/dashboard.html", context)
 
+#for notification
+def notifications(request):
+    return render(request, 'store/notifications.html', {'message': 'No notifications'})
+
+
 
 class ProductListView(LoginRequiredMixin, ExportMixin, tables.SingleTableView):
     """
