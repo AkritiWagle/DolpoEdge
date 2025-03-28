@@ -17,14 +17,18 @@ from django.forms import model_to_dict
 from django_extensions.db.fields import AutoSlugField
 from phonenumber_field.modelfields import PhoneNumberField
 from accounts.models import Vendor
+from datetime import datetime
 
 
 class Category(models.Model):
     """
     Represents a category for items.
     """
-    name = models.CharField(max_length=50)
+    name = models.CharField(max_length=255)
     slug = AutoSlugField(unique=True, populate_from='name')
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         """
