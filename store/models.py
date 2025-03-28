@@ -26,6 +26,7 @@ class Category(models.Model):
     """
     name = models.CharField(max_length=255)
     slug = AutoSlugField(unique=True, populate_from='name')
+    remarks = models.TextField(null=True, blank=True, help_text="Additional notes about the category")
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -38,6 +39,7 @@ class Category(models.Model):
 
     class Meta:
         verbose_name_plural = 'Categories'
+        db_table = 'categories'
 
 
 class Item(models.Model):
