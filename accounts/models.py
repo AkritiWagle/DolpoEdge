@@ -186,10 +186,10 @@ class Customer(models.Model):
         verbose_name_plural = 'Vendors'
 
     def __str__(self) -> str:
-        return self.first_name + " " + self.last_name
+        return self.name 
 
     def get_full_name(self):
-        return self.first_name + " " + self.last_name
+        return self.name
 
     def to_select2(self):
         item = {

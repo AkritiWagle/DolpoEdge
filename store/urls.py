@@ -11,6 +11,7 @@ from .views import (
     ProductCreateView,
     ProductUpdateView,
     ProductDeleteView,
+    product_qr_code,
     ItemSearchListView,
     DeliveryListView,
     DeliveryDetailView,
@@ -126,6 +127,8 @@ urlpatterns = [
         CategoryDeleteView.as_view(),
         name='category-delete'
     ),
+    path('qr-code/<slug:slug>/', product_qr_code, name='product-qr-code'),
+
     
 ]
 

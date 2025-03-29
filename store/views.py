@@ -12,10 +12,13 @@ and querying functionalities.
 
 # Standard library imports
 import operator
+import qrcode
+from io import BytesIO
 from functools import reduce
 
 # Django core imports
-from django.shortcuts import render
+from django.http import HttpResponse
+from django.shortcuts import render, get_object_or_404
 from django.urls import reverse, reverse_lazy
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
@@ -378,6 +381,27 @@ class CategoryDeleteView(LoginRequiredMixin, DeleteView):
     context_object_name = 'category'
     success_url = reverse_lazy('category-list')
     login_url = 'login'
+
+
+def product_qr_code(request, slug):
+    # Retrieve the product details
+    product = get_object_or_404(Item, slug=slug)
+    # You can customize the data as needed
+    data = (
+        f"B.M Industries\n\n"
+        f"Dolpo Edge\n\n"
+        f"Product: {product.name}\n"
+        f"Category: {product.category.name}\n"
+        f"Selling Price: {product.selling_price}\n"
+        f"Quantity: {product.quantity}"
+    )
+    
+    # Generate the QR code
+    qr = qrcode.make(data)
+    buffer = BytesIO()
+    qr.save(buffer, format="PNG")
+    buffer.seek(0)
+    return HttpResponse(buffer.getvalue(), content_type="image/png")
 
 
 def is_ajax(request):

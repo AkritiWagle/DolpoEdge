@@ -52,14 +52,43 @@
                     <td>{{ item.quantity }}</td>
                     <td>{{ item.selling_price }}</td>
                     <!-- <td>{{ item.vendor }}</td> -->
-                    <td>
+
+                    <!-- <td>
                         <a class="btn btn-outline-info btn-sm" href="{% url 'product-update' item.slug %}">
                             <i class="fa-solid fa-pen"></i> Edit
                         </a>
                         <a class="btn btn-outline-danger btn-sm float-end" href="{% url 'product-delete' item.slug %}">
                             <i class="fa-solid fa-trash"></i> Delete
                         </a>
+                        <a class="btn btn-outline-secondary btn-sm" href="#" 
+                            data-bs-toggle="modal" 
+                            data-bs-target="#qrModal" 
+                            data-slug="{{ item.slug }}"
+                            data-name="{{ item.name }}"
+                            data-category="{{ item.category.name }}">
+                            <i class="fa-solid fa-qrcode"></i> QR Code
+                        </a>
+                    </td> -->
+
+                    <td>
+                        <div class="d-flex justify-content-evenly gap-2">
+                          <a class="btn btn-outline-info btn-sm" href="{% url 'product-update' item.slug %}">
+                            <i class="fa-solid fa-pen"></i> Edit
+                          </a>
+                          <a class="btn btn-outline-secondary btn-sm" href="#" 
+                             data-bs-toggle="modal" 
+                             data-bs-target="#qrModal" 
+                             data-slug="{{ item.slug }}"
+                             data-name="{{ item.name }}"
+                             data-category="{{ item.category.name }}">
+                            <i class="fa-solid fa-qrcode"></i> QR Code
+                          </a>
+                          <a class="btn btn-outline-danger btn-sm" href="{% url 'product-delete' item.slug %}">
+                            <i class="fa-solid fa-trash"></i> Delete
+                          </a>
+                        </div>
                     </td>
+
                 </tr>
                 {% endfor %}
             </tbody>
@@ -110,4 +139,45 @@
     </nav>
     {% endif %}
 </div>
+<!-- QR Code Modal -->
+<div class="modal fade" id="qrModal" tabindex="-1" aria-labelledby="qrModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <!-- This header will be updated dynamically -->
+          <h5 class="modal-title" id="qrModalLabel"></h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body text-center">
+          <img id="qrImage" src="" alt="QR Code" class="img-fluid">
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  
+  <!-- Add your JavaScript just before closing </body> tag -->
+  <script>
+    var qrModal = document.getElementById('qrModal');
+    qrModal.addEventListener('show.bs.modal', function (event) {
+      // Button that triggered the modal
+      var button = event.relatedTarget;
+      
+      // Extract product details from data attributes
+      var slug = button.getAttribute('data-slug');
+      var name = button.getAttribute('data-name');
+      var category = button.getAttribute('data-category');
+      
+      // Set the modal title (e.g., "ItemName CategoryName")
+      var modalTitle = document.getElementById('qrModalLabel');
+      modalTitle.textContent = name + ' ' + category;
+      
+      // Build URL for QR code generation
+      var qrUrl = "{% url 'product-qr-code' 'slug_placeholder' %}".replace('slug_placeholder', slug);
+      
+      // Set the image source in the modal
+      var qrImage = document.getElementById('qrImage');
+      qrImage.src = qrUrl;
+    });
+  </script>
 {% endblock content %}
