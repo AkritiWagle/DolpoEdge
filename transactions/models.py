@@ -208,3 +208,69 @@ class OtherPurchase(models.Model):
         ordering = ['-date']
         verbose_name = 'Non-Inventory Purchase'
         verbose_name_plural = 'Non-Inventory Purchases'
+
+class OtherPurchaseDetailed(models.Model):
+    PURCHASE_TYPES = [
+        ('stationary', 'Stationary'),
+        ('sanitary', 'Sanitary'),
+        ('furniture', 'Furniture'),
+        ('equipment', 'Equipment'),
+        ('other', 'Other'),
+    ]
+
+    other_purchase_id = models.ForeignKey(
+        OtherPurchase,
+        on_delete=models.CASCADE,
+        related_name='details'
+    )
+    unit_of_measure = models.CharField(
+        max_length=20,
+        choices=[
+            ('unit', 'Unit'),
+            ('box', 'Box'),
+            ('pack', 'Pack'),
+            ('set', 'Set'),
+            ('kg', 'Kilogram'),
+            ('liter', 'Liter')
+        ],
+        default='unit'
+    )
+    unit_price = models.DecimalField(
+        max_digits=10,
+        decimal_places=2
+    )
+    quantity = models.PositiveIntegerField(default=1)
+    total_price = models.DecimalField(
+        max_digits=12,
+        decimal_places=2
+    )
+    type = models.CharField(
+        max_length=10,
+        choices=PURCHASE_TYPES,
+        default='other'
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def save(self, *args, **kwargs):
+        """Auto-calculate total price before saving"""
+        self.total_price = self.unit_price * self.quantity
+        super().save(*args, **kwargs)
+
+    # def clean(self):
+    #     """Validation for pricing consistency"""
+    #     if self.total_price != self.unit_price * self.quantity:
+    #         raise ValidationError("Total price must equal unit price × quantity")
+
+    def __str__(self):
+        return f"{self.get_type_display()} - {self.quantity} {self.get_unit_of_measure_display()}"
+
+    class Meta:
+        db_table = 'other_purchase_detailed'
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['type']),
+            models.Index(fields=['unit_of_measure']),
+        ]
+        verbose_name = 'Detailed Non-Inventory Purchase'
+        verbose_name_plural = 'Detailed Non-Inventory Purchases'
