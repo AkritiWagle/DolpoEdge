@@ -13,9 +13,8 @@ class ItemForm(forms.ModelForm):
             'description',
             'category',
             'quantity',
-            'price',
-            'expiring_date',
-            'vendor'
+            'selling_price',
+            # 'vendor'
         ]
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-control'}),
@@ -27,19 +26,13 @@ class ItemForm(forms.ModelForm):
             ),
             'category': forms.Select(attrs={'class': 'form-control'}),
             'quantity': forms.NumberInput(attrs={'class': 'form-control'}),
-            'price': forms.NumberInput(
+            'selling_price': forms.NumberInput(
                 attrs={
                     'class': 'form-control',
                     'step': '0.01'
                 }
             ),
-            'expiring_date': forms.DateTimeInput(
-                attrs={
-                    'class': 'form-control',
-                    'type': 'datetime-local'
-                }
-            ),
-            'vendor': forms.Select(attrs={'class': 'form-control'}),
+            # 'vendor': forms.Select(attrs={'class': 'form-control'}),
         }
 
 

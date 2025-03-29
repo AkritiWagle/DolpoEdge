@@ -17,7 +17,8 @@ from django.forms import model_to_dict
 from django_extensions.db.fields import AutoSlugField
 from phonenumber_field.modelfields import PhoneNumberField
 from accounts.models import Vendor
-from datetime import datetime
+from django.core.exceptions import ValidationError
+
 
 
 class Category(models.Model):
@@ -51,9 +52,13 @@ class Item(models.Model):
     description = models.TextField(max_length=256)
     category = models.ForeignKey(Category, on_delete=models.CASCADE)
     quantity = models.IntegerField(default=0)
-    price = models.FloatField(default=0)
-    expiring_date = models.DateTimeField(null=True, blank=True)
-    vendor = models.ForeignKey(Vendor, on_delete=models.SET_NULL, null=True)
+    # price = models.FloatField(default=0)
+    selling_price = models.FloatField(default=0, verbose_name='Selling Price')
+
+    # vendor = models.ForeignKey(Vendor, on_delete=models.SET_NULL, null=True)
+    remarks = models.TextField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         """
@@ -80,9 +85,53 @@ class Item(models.Model):
         return product
 
     class Meta:
+        db_table = 'product'
         ordering = ['name']
         verbose_name_plural = 'Items'
 
+class Batch(models.Model):
+    """
+    Represents a batch of products with manufacturing/expiration tracking.
+    """
+    name = models.CharField(max_length=255, unique=True)
+    manufacturing_date = models.DateTimeField()
+    expiration_date = models.DateTimeField()
+    quantity = models.IntegerField(default=0)
+    product = models.ForeignKey(
+        Item, 
+        on_delete=models.CASCADE,
+        related_name='batches'
+    )
+    remarks = models.TextField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Batch {self.name} - {self.product.name}"
+
+    def clean(self):
+        """Validation logic for date consistency"""
+        super().clean()
+        
+        if self.expiration_date <= self.manufacturing_date:
+            raise ValidationError({
+                'expiration_date': 'Expiration date must be after manufacturing date'
+            })
+
+    def save(self, *args, **kwargs):
+        """Ensure validations are run on every save"""
+        self.full_clean()
+        super().save(*args, **kwargs)
+
+    class Meta:
+        db_table = 'batch'
+        verbose_name_plural = 'Batches'
+        ordering = ['-manufacturing_date']
+        indexes = [
+            models.Index(fields=['manufacturing_date'], name='manufacturing_date_idx'),
+            models.Index(fields=['expiration_date'], name='expiration_date_idx'),
+            models.Index(fields=['product', 'manufacturing_date'], name='product_manufacturing_idx'),
+        ]
 
 class Delivery(models.Model):
     """

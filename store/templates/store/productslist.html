@@ -38,9 +38,8 @@
                     <th scope="col">Name <i class="fa-solid fa-sort"></i></th>
                     <th scope="col">Category <i class="fa-solid fa-sort"></i></th>
                     <th scope="col">Quantity <i class="fa-solid fa-sort"></i></th>
-                    <th scope="col">Price <i class="fa-solid fa-sort"></i></th>
-                    <th scope="col">Expiring Date <i class="fa-solid fa-sort"></i></th>
-                    <th scope="col">Vendor <i class="fa-solid fa-sort"></i></th>
+                    <th scope="col">Selling Price <i class="fa-solid fa-sort"></i></th>
+                    <!-- <th scope="col">Vendor <i class="fa-solid fa-sort"></i></th> -->
                     <th scope="col">Action</th>
                 </tr>
             </thead>
@@ -51,9 +50,8 @@
                     <td>{{ item.name }}</td>
                     <td>{{ item.category }}</td>
                     <td>{{ item.quantity }}</td>
-                    <td>{{ item.price }}</td>
-                    <td>{{ item.expiring_date }}</td>
-                    <td>{{ item.vendor }}</td>
+                    <td>{{ item.selling_price }}</td>
+                    <!-- <td>{{ item.vendor }}</td> -->
                     <td>
                         <a class="btn btn-outline-info btn-sm" href="{% url 'product-update' item.slug %}">
                             <i class="fa-solid fa-pen"></i> Edit

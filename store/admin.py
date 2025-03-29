@@ -27,10 +27,10 @@ class ItemAdmin(admin.ModelAdmin):
     Admin configuration for the Item model.
     """
     list_display = (
-        'name', 'category', 'quantity', 'price', 'expiring_date', 'vendor'
+        'name', 'category', 'quantity', 'selling_price'
     )
-    search_fields = ('name', 'category__name', 'vendor__name')
-    list_filter = ('category', 'vendor')
+    search_fields = ('name', 'category__name')
+    filter = ('category')
     ordering = ('name',)
 
 
