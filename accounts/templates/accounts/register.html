@@ -9,7 +9,7 @@
   <div class="login-page">
     <style>
     .login-page {
-      width: 360px;
+      width: 660px;
       padding: 8% 0 0;
       margin: auto;
     }
@@ -21,7 +21,7 @@
       position: relative;
       z-index: 1;
       background: #212529;
-      max-width: 360px;
+      max-width: 660px;
       margin: 0 auto 100px;
       padding: 45px;
       text-align: center;
@@ -109,11 +109,37 @@
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
     }
+
+    .logo-container {
+  display: flex;
+  align-items: center; /* Vertically center */
+  justify-content: center; /* Horizontally center */
+  gap: 10px; /* Space between logo and text */
+}
+
+.logo-img {
+  height: 40px; /* Adjust size as needed */
+  width: auto;
+}
     </style>
     <div class="form">
-      <div>
-        <strong class="navbar-brand" style="font-size: 26px; color: #FFFFFF;">Dolpo<span class="text_edge">Edge</span></strong>
+
+      <div class="logo-container">
+        <img src="{% static 'images/logo/dolpo_logo_small.png' %}" alt="Dolpo Logo" class="logo-img">
+        <strong class="navbar-brand" style="font-size: 26px; color: #FFFFFF;" >
+          Dolpo<span class="text_edge">Edge</span>
+        </strong>
       </div>
+      
+
+      <br>
+      <div>
+        <strong class="" style="font-size: 20px; color: #ffffff;">A <span style="font-size: 20px; color: #f25b00;">fun</span> that <span style="font-size: 20px; color: #f25b00;">never ends</span></strong>
+      </div>
+
+      <!-- <div>
+        <strong class="navbar-brand" style="font-size: 26px; color: #FFFFFF;">Dolpo<span class="text_edge">Edge</span></strong>
+      </div> -->
       <div class="text-danger">
         {% if messages %} {% for message in messages %}
         <div class="alert alert-{{message.tags}}">
