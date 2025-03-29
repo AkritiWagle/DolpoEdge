@@ -5,6 +5,7 @@ from django_extensions.db.fields import AutoSlugField
 from imagekit.models import ProcessedImageField
 from imagekit.processors import ResizeToFill
 from phonenumber_field.modelfields import PhoneNumberField
+# from datetime import datetime
 
 
 # Define choices for profile status and roles
@@ -92,7 +93,7 @@ class Profile(models.Model):
 
 class Vendor(models.Model):
     """
-    Represents a vendor with contact and address information.
+    Represents a raw material vendor with contact and address information.
     """
     name = models.CharField(max_length=50, verbose_name='Name')
     slug = AutoSlugField(
@@ -100,12 +101,39 @@ class Vendor(models.Model):
         populate_from='name',
         verbose_name='Slug'
     )
-    phone_number = models.BigIntegerField(
-        blank=True, null=True, verbose_name='Phone Number'
+    contact = models.BigIntegerField(
+        blank=True, null=True, verbose_name='Contact Number'
     )
     address = models.CharField(
         max_length=50, blank=True, null=True, verbose_name='Address'
     )
+    email = models.EmailField(
+        blank=True, 
+        null=True, 
+        verbose_name='Email Address'
+    )
+    store_name = models.CharField(
+        max_length=100, 
+        blank=True, 
+        null=True, 
+        verbose_name='Store Name'
+    )
+    remarks = models.TextField(
+        blank=True, 
+        null=True, 
+        verbose_name='Additional Notes'
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True, 
+        verbose_name='Creation Date'
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True, 
+        verbose_name='Last Updated'
+    )
+    # created_at = models.DateTimeField(default=datetime.now)
+    # updated_at = models.DateTimeField(default=datetime.now)
+
 
     def __str__(self):
         """
@@ -115,8 +143,9 @@ class Vendor(models.Model):
 
     class Meta:
         """Meta options for the Vendor model."""
-        verbose_name = 'Vendor'
-        verbose_name_plural = 'Vendors'
+        db_table = 'raw_material_vendor'
+        verbose_name = 'Raw Material Vendor'
+        verbose_name_plural = 'Raw Material Vendors'
 
 
 class Customer(models.Model):

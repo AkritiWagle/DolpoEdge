@@ -12,5 +12,5 @@ class ProfileAdmin(admin.ModelAdmin):
 class VendorAdmin(admin.ModelAdmin):
     """Admin interface for the Vendor model."""
     fields = ('name', 'phone_number', 'address')
-    list_display = ('name', 'phone_number', 'address')
-    search_fields = ('name', 'phone_number', 'address')
+    list_display = ('name', 'contact', 'address')
+    search_fields = ('name', 'contact', 'address')
