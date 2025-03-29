@@ -28,7 +28,7 @@
         <thead class="thead-light">
             <tr>
                 <th>Name</th>
-                <th>Phone Number</th>
+                <th>Contact</th>
                 <th>Address</th>
                 <th>Actions</th>
             </tr>
@@ -37,7 +37,7 @@
             {% for vendor in vendors %}
             <tr>
                 <td>{{ vendor.name }}</td>
-                <td>{{ vendor.phone_number }}</td>
+                <td>{{ vendor.contact }}</td>
                 <td>{{ vendor.address }}</td>
                 <td>
                     <a href="{% url 'vendor-update' vendor.pk %}" class="btn btn-outline-warning btn-sm">

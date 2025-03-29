@@ -153,9 +153,14 @@ class Customer(models.Model):
     """
     Represents a client material vendor with contact and address information. (renamed table from "Customers" to "vendor").
     """
-    class StoreType(models.TextChoices):
-        WHOLESALE = 'wholesale', _('Wholesale')
-        RETAIL = 'retail', _('Retail')
+    # class StoreType(models.TextChoices):
+    #     WHOLESALE = 'wholesale', _('Wholesale')
+    #     RETAIL = 'retail', _('Retail')
+    
+    STORE_TYPE_CHOICES = (
+        ('retail', 'Retail'),
+        ('wholesale', 'Wholesale'),
+    )
 
     # first_name = models.CharField(max_length=256)
     # last_name = models.CharField(max_length=256, blank=True, null=True)
@@ -169,10 +174,16 @@ class Customer(models.Model):
     # phone = models.CharField(max_length=30, blank=True, null=True)
     loyalty_points = models.IntegerField(default=0)
 
+    # store_type = models.CharField(
+    #     max_length=10,
+    #     choices=store_type.choices,
+    #     default=StoreType.RETAIL    
+    # )
+
     store_type = models.CharField(
         max_length=10,
-        choices=StoreType.choices,
-        default=StoreType.RETAIL    
+        choices=STORE_TYPE_CHOICES,
+        default='retail'
     )
     # created_at = models.DateTimeField(auto_now_add=True)
     # updated_at = models.DateTimeField(auto_now=True)

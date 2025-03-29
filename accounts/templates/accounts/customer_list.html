@@ -32,6 +32,8 @@
                 <th scope="col">Address</th>
                 <th scope="col">Email</th>
                 <th scope="col">Contact</th>
+                <th scope="col">Store</th>
+                <th scope="col">Type</th>
                 <th scope="col">Loyalty Points</th>
                 <th scope="col">Actions</th>
             </tr>
@@ -45,6 +47,8 @@
                 <td>{{ customer.address }}</td>
                 <td>{{ customer.email }}</td>
                 <td>{{ customer.contact }}</td>
+                <td>{{ customer.store_name }}</td>
+                <td>{{ customer.store_type }}</td>
                 <td>{{ customer.loyalty_points }}</td>
                 <td>
                     <a href="{% url 'customer_update' customer.pk %}" class="btn btn-outline-primary btn-sm me-2">
