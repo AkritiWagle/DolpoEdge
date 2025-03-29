@@ -158,3 +158,53 @@ class Purchase(models.Model):
 
     class Meta:
         ordering = ["order_date"]
+
+
+class OtherPurchase(models.Model):
+    """
+    Represents purchases not tied to specific inventory items.
+    """
+    source = models.CharField(
+        max_length=255, 
+        verbose_name="From",
+        help_text="Source/origin of the purchase",
+        null=False
+    )
+    date = models.DateTimeField(
+        verbose_name="Purchase Date"
+    )
+    description = models.TextField(
+        verbose_name="Purchase Details"
+    )
+    sub_total = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        verbose_name="Subtotal Amount"
+    )
+    grand_total = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        verbose_name="Total Amount"
+    )
+    remarks = models.TextField(
+        blank=True, 
+        null=True,
+        verbose_name="Additional Notes"
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name="Record Creation Date"
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        verbose_name="Last Updated"
+    )
+
+    def __str__(self):
+        return f"{self.source} - {self.date.strftime('%Y-%m-%d')}"
+
+    class Meta:
+        db_table = 'other_purchase'
+        ordering = ['-date']
+        verbose_name = 'Non-Inventory Purchase'
+        verbose_name_plural = 'Non-Inventory Purchases'
