@@ -4,10 +4,24 @@
 
 {% block content %}
 <div>
-    <div class="container pt-5 text-center">
-        <h4>
-            There are no notifications
-        </h4>
+  <div class="container pt-5">
+    <div class="alert alert-danger" role="alert" style="background-color: #f8d7da; border: 2px solid #f5c6cb;">
+      <strong>CRITICAL: OUT OF STOCK!!! </strong> <em style="font-size: 1.3em; color: #721c24; text-shadow: 1px 1px 0 #fbc2c4;">"American Dry Fruit"</em>  has  <strong style="color: #721c24;">0 items left</strong>
     </div>
+    <div class="alert alert-danger" role="alert" style="background-color: #f8d7da; border: 2px solid #f5c6cb;">
+      <strong>CRITICAL: OUT OF STOCK!!! </strong> <em style="font-size: 1.3em; color: #721c24; text-shadow: 1px 1px 0 #fbc2c4;">"Dolpo Classic "</em>  has  <strong style="color: #721c24;">0 items left</strong>
+    </div>
+    <!-- <div class="alert alert-danger" role="alert" style="background-color: #f8d7da; border: 2px solid #f5c6cb;">
+        <strong style="font-size: 1.3em; color: #721c24; text-shadow: 1px 1px 0 #865c5e;">CRITICAL: OUT OF STOCK!</strong> Product <em>"Dolpo Classic"</em> is completely out of stock (0 items left). <strong style="color: #721c24;">IMMEDIATE RESTOCK REQUIRED!</strong>
+      </div> -->
+
+    <div class="alert alert-warning" role="alert" style="background-color: #fff3cd; border: 2px solid #ffeeba;">
+      <strong >WARNING: Low Stock!!</strong>  <em style="font-size: 1.2em; color: #856404; text-shadow: 1px 1px 0 #fff8ec;">"Butter Scotch"</em> has <strong style="font-size: 1.2em; color: #856404; text-shadow: 1px 1px 0 #fff8ec;">50 items left</strong>
+    </div>
+
+    <div class="alert alert-info" role="alert" style="background-color: #d1ecf1; border: 2px solid #bee5eb;">
+      <strong >NOTICE: Approaching Low Stock!</strong>  <em style="font-size: 1.1em; color: #0c5460; text-shadow: 1px 1px 0 #c2e0e5;">"Chocobar pcs"</em> has  <strong style="color: #0c5460; font-style: italic;">179 items left.</strong>
+    </div>
+  </div>
 </div>
 {% endblock content %}
