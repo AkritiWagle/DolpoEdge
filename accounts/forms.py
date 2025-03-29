@@ -50,22 +50,18 @@ class CustomerForm(forms.ModelForm):
     class Meta:
         model = Customer
         fields = [
-            'first_name',
-            'last_name',
+            'name',
             'address',
             'email',
-            'phone',
+            'contact',
             'loyalty_points'
         ]
         widgets = {
-            'first_name': forms.TextInput(attrs={
+            'name': forms.TextInput(attrs={
                 'class': 'form-control',
-                'placeholder': 'Enter first name'
+                'placeholder': 'Enter the name'
             }),
-            'last_name': forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'Enter last name'
-            }),
+            
             'address': forms.Textarea(attrs={
                 'class': 'form-control',
                 'placeholder': 'Enter address',
@@ -75,7 +71,7 @@ class CustomerForm(forms.ModelForm):
                 'class': 'form-control',
                 'placeholder': 'Enter email'
             }),
-            'phone': forms.TextInput(attrs={
+            'contact': forms.TextInput(attrs={
                 'class': 'form-control',
                 'placeholder': 'Enter phone number'
             }),

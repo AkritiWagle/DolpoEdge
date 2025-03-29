@@ -5,7 +5,8 @@ from django_extensions.db.fields import AutoSlugField
 from imagekit.models import ProcessedImageField
 from imagekit.processors import ResizeToFill
 from phonenumber_field.modelfields import PhoneNumberField
-# from datetime import datetime
+from django.utils.translation import gettext_lazy as _
+from datetime import datetime
 
 
 # Define choices for profile status and roles
@@ -149,15 +150,40 @@ class Vendor(models.Model):
 
 
 class Customer(models.Model):
-    first_name = models.CharField(max_length=256)
-    last_name = models.CharField(max_length=256, blank=True, null=True)
+    """
+    Represents a client material vendor with contact and address information. (renamed table from "Customers" to "vendor").
+    """
+    class StoreType(models.TextChoices):
+        WHOLESALE = 'wholesale', _('Wholesale')
+        RETAIL = 'retail', _('Retail')
+
+    # first_name = models.CharField(max_length=256)
+    # last_name = models.CharField(max_length=256, blank=True, null=True)
+    name = models.CharField(max_length=256)  # Combined first_name + last_name
+    store_name = models.CharField(max_length=256, blank=True, null=True)
+    contact = models.CharField(max_length=30, blank=True, null=True)
+
     address = models.TextField(max_length=256, blank=True, null=True)
+    remarks = models.TextField(max_length=256, blank=True, null=True)
     email = models.EmailField(max_length=256, blank=True, null=True)
-    phone = models.CharField(max_length=30, blank=True, null=True)
+    # phone = models.CharField(max_length=30, blank=True, null=True)
     loyalty_points = models.IntegerField(default=0)
 
+    store_type = models.CharField(
+        max_length=10,
+        choices=StoreType.choices,
+        default=StoreType.RETAIL    
+    )
+    # created_at = models.DateTimeField(auto_now_add=True)
+    # updated_at = models.DateTimeField(auto_now=True)
+
+    created_at = models.DateTimeField(default=datetime.now)
+    updated_at = models.DateTimeField(default=datetime.now)
+
     class Meta:
-        db_table = 'Customers'
+        db_table = 'vendor'
+        verbose_name = 'Vendor'
+        verbose_name_plural = 'Vendors'
 
     def __str__(self) -> str:
         return self.first_name + " " + self.last_name
