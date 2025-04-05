@@ -319,3 +319,78 @@ class OfferDiscount(models.Model):
             models.Index(fields=['type']),
             models.Index(fields=['valid_from', 'valid_till']),
         ]
+
+# offer discount detailed table
+
+class OfferDiscountDetailed(models.Model):
+    TYPE_CHOICES = [
+        ('offer', 'Offer'),
+        ('discount', 'Discount'),
+    ]
+
+    type = models.CharField(
+        max_length=8,
+        choices=TYPE_CHOICES,
+        default='offer'
+    )
+    offer_id = models.ForeignKey(
+        'OfferDiscount',
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='offer_details'
+    )
+    discount_id = models.ForeignKey(
+        'OfferDiscount',
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='discount_details'
+    )
+    product_id = models.ForeignKey(
+        'store.Item',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        verbose_name='Related Product'
+    )
+    vendor_id = models.ForeignKey(
+        'accounts.Customer',  # Assuming Vendor model exists in store app
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        verbose_name='Related Vendor'
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def clean(self):
+        """Validate relationship constraints"""
+        # errors = {}
+        
+        # # Ensure only one of offer/discount is set based on type
+        # if self.type == 'offer' and not self.offer:
+        #     errors['offer'] = 'Offer must be set for offer type'
+        # if self.type == 'discount' and not self.discount:
+        #     errors['discount'] = 'Discount must be set for discount type'
+        # if self.offer and self.discount:
+        #     errors['offer'] = 'Cannot have both offer and discount references'
+            
+        # if errors:
+        #     raise ValidationError(errors)
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.get_type_display()} Details - {self.offer or self.discount}"
+
+    class Meta:
+        db_table = 'offer_discount_detailed'
+        verbose_name = 'Offer/Discount Detail'
+        verbose_name_plural = 'Offer/Discount Details'
+        indexes = [
+            models.Index(fields=['type']),
+            models.Index(fields=['offer_id', 'discount_id']),
+        ]
