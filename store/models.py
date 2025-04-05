@@ -133,6 +133,38 @@ class Batch(models.Model):
             models.Index(fields=['product', 'manufacturing_date'], name='product_manufacturing_idx'),
         ]
 
+class RawMaterial(models.Model):
+    """
+    Represents raw materials inventory with vendor tracking.
+    """
+    name = models.CharField(max_length=255)
+    description = models.TextField(blank=True, null=True)
+    expiration_date = models.DateTimeField(blank=True, null=True)
+    unit_of_measure = models.CharField(max_length=20)
+    quantity = models.IntegerField(default=0)
+    unit_price = models.DecimalField(
+        max_digits=10, 
+        decimal_places=2,
+        default=0.00
+    )
+    remarks = models.TextField(blank=True, null=True)
+    vendor = models.ForeignKey(
+        'accounts.Vendor',  # Cross-app reference
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+        verbose_name='Supplier'
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'raw_material'
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.name} ({self.quantity} {self.unit_of_measure})"
+
 class Delivery(models.Model):
     """
     Represents a delivery of an item to a customer.
