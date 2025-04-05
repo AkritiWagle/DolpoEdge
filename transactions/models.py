@@ -1,5 +1,7 @@
 from django.db import models
 from django_extensions.db.fields import AutoSlugField
+from django.core.exceptions import ValidationError
+
 
 from store.models import Item
 from accounts.models import Vendor, Customer
@@ -274,3 +276,46 @@ class OtherPurchaseDetailed(models.Model):
         ]
         verbose_name = 'Detailed Non-Inventory Purchase'
         verbose_name_plural = 'Detailed Non-Inventory Purchases'
+
+# offer discount table
+class OfferDiscount(models.Model):
+    TYPE_CHOICES = [
+        ('offer', 'Special Offer'),
+        ('discount', 'Discount'),
+    ]
+
+    name = models.CharField(max_length=255)
+    description = models.TextField()
+    date = models.DateTimeField(verbose_name="Effective Date")
+    valid_from = models.DateTimeField()
+    valid_till = models.DateTimeField()
+    remarks = models.TextField(blank=True, null=True)
+    type = models.CharField(
+        max_length=8,
+        choices=TYPE_CHOICES,
+        default='offer',
+        verbose_name="Offer/Discount Type"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def clean(self):
+        """Validate date ranges"""
+        if self.valid_till <= self.valid_from:
+            raise ValidationError("Valid Till date must be after Valid From date")
+        
+        if self.date > self.valid_from:
+            raise ValidationError("Effective date cannot be after validity start")
+
+    def __str__(self):
+        return f"{self.get_type_display()} - {self.name}"
+
+    class Meta:
+        db_table = 'offer_discount'
+        ordering = ['-valid_from']
+        verbose_name = 'Offer/Discount'
+        verbose_name_plural = 'Offers & Discounts'
+        indexes = [
+            models.Index(fields=['type']),
+            models.Index(fields=['valid_from', 'valid_till']),
+        ]
