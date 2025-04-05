@@ -18,6 +18,8 @@ from django_extensions.db.fields import AutoSlugField
 from phonenumber_field.modelfields import PhoneNumberField
 from accounts.models import Vendor
 from django.core.exceptions import ValidationError
+from django.contrib.contenttypes.fields import GenericForeignKey
+from django.contrib.contenttypes.models import ContentType
 
 
 
@@ -217,6 +219,87 @@ class OperationsInventory(models.Model):
             models.Index(fields=['type']),
             models.Index(fields=['vendor']),
         ]
+
+#Stock table
+
+class Stock(models.Model):
+    STOCK_TYPE_CHOICES = [
+        ('product', 'Product Stock'),
+        ('raw_material', 'Raw Material Stock'),
+        ('operations', 'Operations Stock'),
+    ]
+
+    # Common fields
+    quantity = models.IntegerField(default=0)
+    unit_of_measure = models.CharField(max_length=20)
+    last_updated = models.DateTimeField(auto_now=True)
+    stock_type = models.CharField(
+        max_length=13,
+        choices=STOCK_TYPE_CHOICES,
+        default='product'
+    )
+    
+    # Batch relationship
+    batch = models.ForeignKey(
+        'Batch',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True
+    )
+    
+    # Generic foreign key for different item types
+    content_type = models.ForeignKey(
+        ContentType,
+        on_delete=models.CASCADE,
+        limit_choices_to={
+            'model__in': ['item', 'rawmaterial', 'operationsinventory']
+        }
+    )
+    object_id = models.PositiveIntegerField()
+    item = GenericForeignKey('content_type', 'object_id')
+
+    # Common metadata
+    created_at = models.DateTimeField(auto_now_add=True)
+    remarks = models.TextField(blank=True, null=True)
+
+    def clean(self):
+        """Validate stock type matches content type"""
+        type_model_map = {
+            'product': 'item',
+            'raw_material': 'rawmaterial',
+            'operations': 'operationsinventory'
+        }
+        
+        expected_model = type_model_map.get(self.stock_type)
+        if self.content_type.model != expected_model:
+            raise ValidationError(
+                f"Stock type {self.stock_type} requires {expected_model} model"
+            )
+
+        if self.quantity < 0:
+            raise ValidationError("Quantity cannot be negative")
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.get_stock_type_display()} Stock - {self.item}"
+
+    class Meta:
+        db_table = 'stock'
+        verbose_name = 'Unified Stock'
+        verbose_name_plural = 'Unified Stock'
+        indexes = [
+            models.Index(fields=['stock_type']),
+            models.Index(fields=['content_type', 'object_id']),
+        ]
+
+    @property
+    def get_stock_item_display(self):
+        """Returns the actual stock item instance"""
+        return self.item
+
 
 class Delivery(models.Model):
     """
