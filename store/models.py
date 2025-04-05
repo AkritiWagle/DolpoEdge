@@ -11,6 +11,7 @@ This module defines the following classes:
 Each class provides specific fields and methods for handling related data.
 """
 
+from datetime import timezone
 from django.db import models
 from django.urls import reverse
 from django.forms import model_to_dict
@@ -299,6 +300,108 @@ class Stock(models.Model):
     def get_stock_item_display(self):
         """Returns the actual stock item instance"""
         return self.item
+
+#alerts table
+class Alerts(models.Model):
+    ALERT_TYPES = [
+        ('low_stock', 'Low Stock Alert'),
+        ('expiration', 'Expiration Alert'),
+    ]
+    
+    ITEM_TYPES = [
+        ('product', 'Product'),
+        ('raw_material', 'Raw Material'),
+    ]
+    
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('resolved', 'Resolved'),
+    ]
+
+    PRIORITY_CHOICES = [
+        ('critical', 'Critical'),
+        ('warning', 'Warning'),
+        ('notice', 'Notice'),
+    ]
+
+    alert_type = models.CharField(
+        max_length=10,
+        choices=ALERT_TYPES,
+        default='low_stock'
+    )
+    related_item_type = models.CharField(
+        max_length=13,
+        choices=ITEM_TYPES,
+        default='product'
+    )
+    priority = models.CharField(
+        max_length=8,
+        choices=PRIORITY_CHOICES,
+        default='notice',
+        help_text="Severity level osf the alert"
+    )
+    
+    # Generic foreign key setup
+    content_type = models.ForeignKey(
+        ContentType,
+        on_delete=models.CASCADE,
+        limit_choices_to={'model__in': ['item', 'rawmaterial']}
+    )
+    object_id = models.PositiveIntegerField()
+    related_item = GenericForeignKey('content_type', 'object_id')
+    
+    description = models.TextField()
+    date_generated = models.DateTimeField(auto_now_add=True)
+    status = models.CharField(
+        max_length=8,
+        choices=STATUS_CHOICES,
+        default='pending'
+    )
+    resolved_date = models.DateTimeField(null=True, blank=True)
+
+    def clean(self):
+        # Validate item type matches content type
+        type_model_map = {
+            'product': 'item',
+            'raw_material': 'rawmaterial'
+        }
+        
+        expected_model = type_model_map.get(self.related_item_type)
+        if self.content_type.model != expected_model:
+            raise ValidationError(
+                f"Item type {self.related_item_type} requires {expected_model} model"
+            )
+            
+        # Validate resolution status
+        if self.status == 'resolved' and not self.resolved_date:
+            raise ValidationError("Resolved date is required when status is resolved")
+            
+        if self.resolved_date and self.status != 'resolved':
+            raise ValidationError("Status must be resolved when resolved date is set")
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.get_alert_type_display()} - {self.related_item} ({self.status})"
+
+    class Meta:
+        db_table = 'alerts'
+        verbose_name = 'Inventory Alert'
+        verbose_name_plural = 'Inventory Alerts'
+        indexes = [
+            models.Index(fields=['alert_type']),
+            models.Index(fields=['status']),
+            models.Index(fields=['content_type', 'object_id']),
+        ]
+
+    @property
+    def alert_age(self):
+        """Returns days since alert was generated"""
+        if self.status == 'resolved':
+            return (self.resolved_date - self.date_generated).days
+        return (timezone.now() - self.date_generated).days
 
 
 class Delivery(models.Model):
