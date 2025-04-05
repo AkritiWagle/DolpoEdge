@@ -165,6 +165,59 @@ class RawMaterial(models.Model):
     def __str__(self):
         return f"{self.name} ({self.quantity} {self.unit_of_measure})"
 
+#operations inventory table
+
+class OperationsInventory(models.Model):
+    TYPE_CHOICES = [
+        ('packaging', 'Packaging Material'),
+        ('other', 'Other Operational Item'),
+    ]
+
+    name = models.CharField(max_length=255)
+    description = models.TextField(blank=True, null=True)
+    type = models.CharField(
+        max_length=10,
+        choices=TYPE_CHOICES,
+        default='packaging'
+    )
+    unit_of_measure = models.CharField(max_length=20)
+    quantity = models.IntegerField(default=0)
+    unit_price = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=0.00
+    )
+    vendor = models.ForeignKey(
+        'accounts.Vendor',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        verbose_name='Supplier'
+    )
+    remarks = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def clean(self):
+        """Validate inventory values"""
+        if self.quantity < 0:
+            raise ValidationError("Quantity cannot be negative")
+        if self.unit_price < 0:
+            raise ValidationError("Unit price cannot be negative")
+
+    def __str__(self):
+        return f"{self.name} ({self.quantity} {self.unit_of_measure})"
+
+    class Meta:
+        db_table = 'operations_inventory'
+        verbose_name = 'Operations Inventory'
+        verbose_name_plural = 'Operations Inventories'
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['type']),
+            models.Index(fields=['vendor']),
+        ]
+
 class Delivery(models.Model):
     """
     Represents a delivery of an item to a customer.
