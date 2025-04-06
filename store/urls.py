@@ -24,7 +24,12 @@ from .views import (
     CategoryCreateView,
     CategoryUpdateView,
     CategoryDeleteView,
-    notifications
+    notifications,
+    RawMaterialListView,
+    RawMaterialCreateView,
+    RawMaterialUpdateView,
+    RawMaterialDeleteView,
+    RawMaterialDetailView
 )
 
 # URL patterns
@@ -128,6 +133,13 @@ urlpatterns = [
         name='category-delete'
     ),
     path('qr-code/<slug:slug>/', product_qr_code, name='product-qr-code'),
+
+    #Raw Materials URL
+    path('raw-materials/', RawMaterialListView.as_view(), name='raw-material-list'),
+    path('raw-material/create/', RawMaterialCreateView.as_view(), name='raw-material-create'),
+    path('raw-material/<int:pk>/', RawMaterialDetailView.as_view(), name='raw-material-detail'),
+    path('raw-material/<int:pk>/update/', RawMaterialUpdateView.as_view(), name='raw-material-update'),
+    path('raw-material/<int:pk>/delete/', RawMaterialDeleteView.as_view(), name='raw-material-delete'),
 
     
 ]

@@ -1,0 +1,58 @@
+{% extends 'store/base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>{% if object %}Update{% else %}Create{% endif %} Raw Material</h2>
+    <form method="post">
+        {% csrf_token %}
+        <div class="row">
+            <div class="col-md-6">
+                <div class="form-group">
+                    {{ form.name.label_tag }}
+                    {{ form.name }}
+                    {{ form.name.errors }}
+                </div>
+                <div class="form-group">
+                    {{ form.unit_of_measure.label_tag }}
+                    {{ form.unit_of_measure }}
+                    {{ form.unit_of_measure.errors }}
+                </div>
+                <div class="form-group">
+                    {{ form.quantity.label_tag }}
+                    {{ form.quantity }}
+                    {{ form.quantity.errors }}
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="form-group">
+                    {{ form.vendor.label_tag }}
+                    {{ form.vendor }}
+                    {{ form.vendor.errors }}
+                </div>
+                <div class="form-group">
+                    {{ form.unit_price.label_tag }}
+                    {{ form.unit_price }}
+                    {{ form.unit_price.errors }}
+                </div>
+                <div class="form-group">
+                    {{ form.expiration_date.label_tag }}
+                    {{ form.expiration_date }}
+                    {{ form.expiration_date.errors }}
+                </div>
+            </div>
+        </div>
+        <div class="form-group">
+            {{ form.description.label_tag }}
+            {{ form.description }}
+            {{ form.description.errors }}
+        </div>
+        <div class="form-group">
+            {{ form.remarks.label_tag }}
+            {{ form.remarks }}
+            {{ form.remarks.errors }}
+        </div>
+        <button type="submit" class="btn btn-primary">Save</button>
+        <a href="{% url 'raw-material-list' %}" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>
+{% endblock %}

@@ -100,8 +100,8 @@
             
 
             <li class="nav-item mb-2">
-                <!-- <a class="nav-link text-light {% if request.resolver_match.url_name == 'saleslist' %}active{% endif %}" href="{% url 'saleslist' %}"> -->
-                <a class="nav-link text-light " href="{% url 'saleslist' %}">
+                <a class="nav-link text-light {% if request.resolver_match.url_name == 'raw-materials' %}active{% endif %}" href="{% url 'raw-material-list' %}">
+                <!-- <a class="nav-link text-light " href="{% url 'raw-material-list' %}"> -->
                     <i class="fa fa-shopping-bag fa-fw me-2"></i> Raw Materials
                 </a>
             </li>

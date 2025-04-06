@@ -1,5 +1,5 @@
 from django import forms
-from .models import Item, Category, Delivery
+from .models import Item, Category, Delivery, RawMaterial
 
 
 class ItemForm(forms.ModelForm):
@@ -92,4 +92,14 @@ class DeliveryForm(forms.ModelForm):
                 'class': 'form-check-input',
                 'label': 'Mark as delivered',
             }),
+        }
+
+class RawMaterialForm(forms.ModelForm):
+    class Meta:
+        model = RawMaterial
+        fields = '__all__'
+        widgets = {
+            'expiration_date': forms.DateInput(attrs={'type': 'date'}),
+            'description': forms.Textarea(attrs={'rows': 3}),
+            'remarks': forms.Textarea(attrs={'rows': 2}),
         }

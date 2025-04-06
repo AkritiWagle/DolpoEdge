@@ -1,0 +1,47 @@
+{% extends 'store/base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Raw Materials Inventory</h2>
+    <a href="{% url 'raw-material-create' %}" class="btn btn-primary mb-3">
+        <i class="fas fa-plus"></i> Add New Material
+    </a>
+    
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Quantity</th>
+                <th>Unit Price</th>
+                <th>Vendor</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for material in materials %}
+            <tr>
+                <td>{{ material.name }}</td>
+                <td>{{ material.quantity }} {{ material.unit_of_measure }}</td>
+                <td>NPR {{ material.unit_price }}</td>
+                <td>{{ material.vendor.name|default:"-" }}</td>
+                <td>
+                    <a href="{% url 'raw-material-detail' material.pk %}" class="btn btn-sm btn-info">
+                        <i class="fas fa-eye"></i>
+                    </a>
+                    <a href="{% url 'raw-material-update' material.pk %}" class="btn btn-sm btn-warning">
+                        <i class="fas fa-edit"></i>
+                    </a>
+                    <a href="{% url 'raw-material-delete' material.pk %}" class="btn btn-sm btn-danger">
+                        <i class="fas fa-trash"></i>
+                    </a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="5" class="text-center">No materials found</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

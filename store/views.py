@@ -43,8 +43,8 @@ from django_tables2.export.views import ExportMixin
 # Local app imports
 from accounts.models import Profile, Vendor
 from transactions.models import Sale
-from .models import Category, Item, Delivery
-from .forms import ItemForm, CategoryForm, DeliveryForm
+from .models import Category, Item, Delivery, RawMaterial
+from .forms import ItemForm, CategoryForm, DeliveryForm, RawMaterialForm
 from .tables import ItemTable
 
 
@@ -382,6 +382,33 @@ class CategoryDeleteView(LoginRequiredMixin, DeleteView):
     success_url = reverse_lazy('category-list')
     login_url = 'login'
 
+class RawMaterialListView(ListView):
+    model = RawMaterial
+    template_name = 'store/raw_material_list.html'
+    context_object_name = 'materials'
+    paginate_by = 10
+
+class RawMaterialCreateView(CreateView):
+    model = RawMaterial
+    form_class = RawMaterialForm
+    template_name = 'store/raw_material_form.html'
+    success_url = reverse_lazy('raw-material-list')
+
+class RawMaterialUpdateView(UpdateView):
+    model = RawMaterial
+    form_class = RawMaterialForm
+    template_name = 'store/raw_material_form.html'
+    success_url = reverse_lazy('raw-material-list')
+
+class RawMaterialDeleteView(DeleteView):
+    model = RawMaterial
+    template_name = 'store/raw_material_confirm_delete.html'
+    success_url = reverse_lazy('raw-material-list')
+
+class RawMaterialDetailView(DetailView):
+    model = RawMaterial
+    template_name = 'store/raw_material_detail.html'
+    context_object_name = 'material'
 
 def product_qr_code(request, slug):
     # Retrieve the product details
