@@ -99,7 +99,12 @@ class RawMaterialForm(forms.ModelForm):
         model = RawMaterial
         fields = '__all__'
         widgets = {
-            'expiration_date': forms.DateInput(attrs={'type': 'date'}),
-            'description': forms.Textarea(attrs={'rows': 3}),
-            'remarks': forms.Textarea(attrs={'rows': 2}),
+            'name': forms.TextInput(attrs={'class': 'form-control'}),
+            'vendor': forms.Select(attrs={'class': 'form-control'}),
+            'unit_of_measure': forms.TextInput(attrs={'class': 'form-control'}),
+            'unit_price': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+            'quantity': forms.NumberInput(attrs={'class': 'form-control'}),
+            'expiration_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'description': forms.Textarea(attrs={'rows': 3, 'class': 'form-control'}),
+            'remarks': forms.Textarea(attrs={'rows': 3, 'class': 'form-control'}),
         }

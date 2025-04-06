@@ -1,58 +1,111 @@
-{% extends 'store/base.html' %}
+
+
+
+
+{% extends "store/base.html" %}
+{% load static %}
+
+{% block title %}
+    {% if object %}Update{% else %}Add{% endif %} Raw Material
+{% endblock title %}
 
 {% block content %}
-<div class="container mt-4">
-    <h2>{% if object %}Update{% else %}Create{% endif %} Raw Material</h2>
-    <form method="post">
-        {% csrf_token %}
-        <div class="row">
-            <div class="col-md-6">
-                <div class="form-group">
-                    {{ form.name.label_tag }}
-                    {{ form.name }}
-                    {{ form.name.errors }}
-                </div>
-                <div class="form-group">
-                    {{ form.unit_of_measure.label_tag }}
-                    {{ form.unit_of_measure }}
-                    {{ form.unit_of_measure.errors }}
-                </div>
-                <div class="form-group">
-                    {{ form.quantity.label_tag }}
-                    {{ form.quantity }}
-                    {{ form.quantity.errors }}
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8 col-md-10">
+            <div class="card shadow-sm border-light">
+                <div class="card-body">
+                    <h1 class="text-center mb-4">
+                        {% if object %}Update{% else %}Add{% endif %} Raw Material
+                    </h1>
+                    <form method="POST" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <!-- First row: Material Name and Vendor -->
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.name.id_for_label }}" class="form-label">
+                                    Material Name
+                                </label>
+                                <br/>
+                                {{ form.name }}
+                                <div class="text-danger">{{ form.name.errors }}</div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.vendor.id_for_label }}" class="form-label">
+                                    Vendor
+                                </label>
+                                <br/>
+                                {{ form.vendor }}
+                                <div class="text-danger">{{ form.vendor.errors }}</div>
+                            </div>
+                        </div>
+                        <!-- Second row: Unit of Measure and Unit Price -->
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.unit_of_measure.id_for_label }}" class="form-label">
+                                    Unit of Measure
+                                </label>
+                                <br/>
+                                {{ form.unit_of_measure }}
+                                <div class="text-danger">{{ form.unit_of_measure.errors }}</div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.unit_price.id_for_label }}" class="form-label">
+                                    Unit Price
+                                </label>
+                                <br/>
+                                {{ form.unit_price }}
+                                <div class="text-danger">{{ form.unit_price.errors }}</div>
+                            </div>
+                        </div>
+                        <!-- Third row: Quantity and Expiration Date -->
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.quantity.id_for_label }}" class="form-label">
+                                    Quantity
+                                </label>
+                                <br/>
+                                {{ form.quantity }}
+                                <div class="text-danger">{{ form.quantity.errors }}</div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.expiration_date.id_for_label }}" class="form-label">
+                                    Expiration Date
+                                </label>
+                                <br/>
+                                {{ form.expiration_date }}
+                                <div class="text-danger">{{ form.expiration_date.errors }}</div>
+                            </div>
+                        </div>
+                        <!-- Fourth row: Description and Remarks -->
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.description.id_for_label }}" class="form-label">
+                                    Description
+                                </label>
+                                <br/>
+                                {{ form.description }}
+                                <div class="text-danger">{{ form.description.errors }}</div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.remarks.id_for_label }} " class="form-label">
+                                    Remarks
+                                </label>
+                                <br/>
+                                {{ form.remarks }}
+                                <div class="text-danger">{{ form.remarks.errors }}</div>
+                            </div>
+                        </div>
+                        <!-- Submit button -->
+                        <div class="form-group text-center">
+                            <button class="btn btn-success btn-lg" type="submit">
+                                <i class="fas fa-check"></i> {% if object %}Update{% else %}Submit{% endif %}
+                            </button>
+                        </div>
+                    </form>
                 </div>
             </div>
-            <div class="col-md-6">
-                <div class="form-group">
-                    {{ form.vendor.label_tag }}
-                    {{ form.vendor }}
-                    {{ form.vendor.errors }}
-                </div>
-                <div class="form-group">
-                    {{ form.unit_price.label_tag }}
-                    {{ form.unit_price }}
-                    {{ form.unit_price.errors }}
-                </div>
-                <div class="form-group">
-                    {{ form.expiration_date.label_tag }}
-                    {{ form.expiration_date }}
-                    {{ form.expiration_date.errors }}
-                </div>
-            </div>
         </div>
-        <div class="form-group">
-            {{ form.description.label_tag }}
-            {{ form.description }}
-            {{ form.description.errors }}
-        </div>
-        <div class="form-group">
-            {{ form.remarks.label_tag }}
-            {{ form.remarks }}
-            {{ form.remarks.errors }}
-        </div>
-        <button type="submit" class="btn btn-primary">Save</button>
-        <a href="{% url 'raw-material-list' %}" class="btn btn-secondary">Cancel</a>
-    </form>
+    </div>
 </div>
-{% endblock %}
+{% endblock content %}

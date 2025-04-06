@@ -385,8 +385,27 @@ class CategoryDeleteView(LoginRequiredMixin, DeleteView):
 class RawMaterialListView(ListView):
     model = RawMaterial
     template_name = 'store/raw_material_list.html'
-    context_object_name = 'materials'
+    context_object_name = 'raw_materials'
     paginate_by = 10
+    ordering = ['-created_at']  # Add explicit ordering
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        query = self.request.GET.get('q')
+        
+        if query:
+            return queryset.filter(
+                Q(name__icontains=query) |
+                Q(description__icontains=query) |
+                Q(remarks__icontains=query) |
+                Q(vendor__name__icontains=query)
+            )
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['search_query'] = self.request.GET.get('q', '')
+        return context
 
 class RawMaterialCreateView(CreateView):
     model = RawMaterial
@@ -402,14 +421,44 @@ class RawMaterialUpdateView(UpdateView):
 
 class RawMaterialDeleteView(DeleteView):
     model = RawMaterial
-    template_name = 'store/raw_material_confirm_delete.html'
+    template_name = 'store/raw_material_confirm_delete.html'  # Add this line
     success_url = reverse_lazy('raw-material-list')
+    
+    # Optional: Add context data if needed
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['object'] = self.get_object()
+        return context
 
 class RawMaterialDetailView(DetailView):
     model = RawMaterial
     template_name = 'store/raw_material_detail.html'
     context_object_name = 'material'
 
+class RawMaterialSearchView(ListView):
+    model = RawMaterial
+    template_name = 'store/raw_material_list.html'
+    context_object_name = 'raw_materials'
+    paginate_by = 10
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        query = self.request.GET.get('q')
+        
+        if query:
+            return queryset.filter(
+                Q(name__icontains=query) |
+                Q(description__icontains=query) |
+                Q(remarks__icontains=query) |
+                Q(vendor__name__icontains=query)
+            )
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['search_query'] = self.request.GET.get('q', '')
+        return context
+    
 def product_qr_code(request, slug):
     # Retrieve the product details
     product = get_object_or_404(Item, slug=slug)

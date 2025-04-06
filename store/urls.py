@@ -29,7 +29,8 @@ from .views import (
     RawMaterialCreateView,
     RawMaterialUpdateView,
     RawMaterialDeleteView,
-    RawMaterialDetailView
+    RawMaterialDetailView,
+    RawMaterialSearchView
 )
 
 # URL patterns
@@ -140,6 +141,8 @@ urlpatterns = [
     path('raw-material/<int:pk>/', RawMaterialDetailView.as_view(), name='raw-material-detail'),
     path('raw-material/<int:pk>/update/', RawMaterialUpdateView.as_view(), name='raw-material-update'),
     path('raw-material/<int:pk>/delete/', RawMaterialDeleteView.as_view(), name='raw-material-delete'),
+    path('raw-materials/', RawMaterialSearchView.as_view(), name='raw-material-list'),
+
 
     
 ]
