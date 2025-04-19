@@ -211,6 +211,50 @@ class Purchase(models.Model):
     def __str__(self):
         return f"Purchase #{self.pk}"
 
+class PurchaseDetailed(models.Model):
+    PURCHASE_TYPE_CHOICES = [
+        ('consumable', 'Consumable'),
+        ('non-consumable', 'Non‑Consumable'),
+    ]
+
+    purchase = models.ForeignKey(
+        'transactions.Purchase',
+        on_delete=models.CASCADE,
+        db_column='purchase_id'
+    )
+    type = models.CharField(
+        max_length=15,
+        choices=PURCHASE_TYPE_CHOICES
+    )
+    raw_material = models.ForeignKey(
+        'store.RawMaterial',
+        on_delete=models.CASCADE,
+        db_column='raw_material_id'
+    )
+    unit_of_measure = models.TextField()
+    unit_price = models.DecimalField(
+        max_digits=10,
+        decimal_places=2
+    )
+    quantity = models.PositiveIntegerField()
+    total_price = models.DecimalField(
+        max_digits=12,
+        decimal_places=2
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True
+    )
+
+    class Meta:
+        db_table = 'purchase_detailed'
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"Detail #{self.pk} for Purchase {self.purchase_id}"
+
 class OtherPurchase(models.Model):
     """
     Represents purchases not tied to specific inventory items.
