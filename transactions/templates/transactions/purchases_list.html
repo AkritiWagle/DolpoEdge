@@ -30,12 +30,12 @@
         <thead class="thead-light">
             <tr>
                 <th scope="col">ID <i class="fa-solid fa-sort"></i></th>
-                <th scope="col">Name <i class="fa-solid fa-sort"></i></th>
-                <th scope="col">Quantity <i class="fa-solid fa-sort"></i></th>
-                <th scope="col">Price <i class="fa-solid fa-sort"></i></th>
-                <th scope="col">Delivery Status <i class="fa-solid fa-sort"></i></th>
-                <th scope="col">Delivery Date <i class="fa-solid fa-sort"></i></th>
+                <th scope="col">Description <i class="fa-solid fa-sort"></i></th>
+                <th scope="col">Date <i class="fa-solid fa-sort"></i></th>
                 <th scope="col">Vendor <i class="fa-solid fa-sort"></i></th>
+                <th scope="col">Sub Total <i class="fa-solid fa-sort"></i></th>
+                <th scope="col">Grand Total Date <i class="fa-solid fa-sort"></i></th>
+                <th scope="col">Remarks <i class="fa-solid fa-sort"></i></th>
                 <th scope="col">Action</th>
             </tr>
         </thead>
@@ -43,22 +43,13 @@
             {% for purchase in purchases %}
             <tr>
                 <th scope="row">{{ purchase.id }}</th>
-                <td>{{ purchase.item.name }}</td>
-                <td>{{ purchase.quantity }}</td>
-                <td>{{ purchase.total_value }}</td>
-                <td>
-                    {% if purchase.delivery_status == 'P' %}
-                        <span class="badge badge-pill bg-soft-danger text-danger me-2">
-                            Pending
-                        </span>
-                    {% else %}
-                        <span class="badge badge-pill bg-soft-success text-success me-2">
-                            Successful
-                        </span>
-                    {% endif %}
-                </td>
-                <td>{{ purchase.delivery_date }}</td>
-                <td>{{ purchase.vendor.name }}</td>
+                <td>{{ purchase.description }}</td>
+                <td>{{ purchase.date }}</td>
+                <td>{{ purchase.raw_material_vendor }}</td>
+                <td>{{ purchase.sub_total }}</td>
+                <td>{{ purchase.grand_total}}</td>
+                <td>{{ purchase.remarks}}</td>
+                
                 <td>
                     <a class="text-info" href="{% url 'purchase-update' purchase.id %}">
                         <i class="fa-solid fa-pen"></i>
