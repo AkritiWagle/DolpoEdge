@@ -1,6 +1,8 @@
 from django.db import models
 from django_extensions.db.fields import AutoSlugField
 from django.core.exceptions import ValidationError
+from django.utils import timezone
+
 
 
 from store.models import Item
@@ -111,56 +113,103 @@ class SaleDetail(models.Model):
         )
 
 
+# class Purchase(models.Model):
+#     """
+#     Represents a purchase of an item,
+#     including vendor details and delivery status.
+#     """
+
+#     slug = AutoSlugField(unique=True, populate_from="vendor")
+#     item = models.ForeignKey(Item, on_delete=models.CASCADE)
+#     description = models.TextField(max_length=300, blank=True, null=True)
+#     vendor = models.ForeignKey(
+#         Vendor, related_name="purchases", on_delete=models.CASCADE
+#     )
+#     order_date = models.DateTimeField(auto_now_add=True)
+#     delivery_date = models.DateTimeField(
+#         blank=True, null=True, verbose_name="Delivery Date"
+#     )
+#     quantity = models.PositiveIntegerField(default=0)
+#     delivery_status = models.CharField(
+#         choices=DELIVERY_CHOICES,
+#         max_length=1,
+#         default="P",
+#         verbose_name="Delivery Status",
+#     )
+#     price = models.DecimalField(
+#         max_digits=10,
+#         decimal_places=2,
+#         default=0.0,
+#         verbose_name="Price per item (NPR)",
+#     )
+#     total_value = models.DecimalField(max_digits=10, decimal_places=2)
+
+#     def save(self, *args, **kwargs):
+#         """
+#         Calculates the total value before saving the Purchase instance.
+#         """
+#         self.total_value = self.price * self.quantity
+#         super().save(*args, **kwargs)
+#         # Update the item quantity
+#         self.item.quantity += self.quantity
+#         self.item.save()
+
+#     def __str__(self):
+#         """
+#         Returns a string representation of the Purchase instance.
+#         """
+#         return str(self.item.name)
+
+#     class Meta:
+#         ordering = ["order_date"]
+
 class Purchase(models.Model):
-    """
-    Represents a purchase of an item,
-    including vendor details and delivery status.
-    """
-
-    slug = AutoSlugField(unique=True, populate_from="vendor")
-    item = models.ForeignKey(Item, on_delete=models.CASCADE)
-    description = models.TextField(max_length=300, blank=True, null=True)
-    vendor = models.ForeignKey(
-        Vendor, related_name="purchases", on_delete=models.CASCADE
+    slug = AutoSlugField(
+        unique=True,
+        populate_from="raw_material_vendor"
     )
-    order_date = models.DateTimeField(auto_now_add=True)
-    delivery_date = models.DateTimeField(
-        blank=True, null=True, verbose_name="Delivery Date"
+    raw_material_vendor = models.ForeignKey(
+        'accounts.Vendor',
+        on_delete=models.CASCADE,
+        db_column='raw_material_vendor_id',
+        related_name='purchases'
     )
-    quantity = models.PositiveIntegerField(default=0)
-    delivery_status = models.CharField(
-        choices=DELIVERY_CHOICES,
-        max_length=1,
-        default="P",
-        verbose_name="Delivery Status",
+    date = models.DateField(
+        # auto_now_add=True,
+        default=timezone.now,
+        editable=True, 
+        help_text="Date when the purchase was recorded"
     )
-    price = models.DecimalField(
+    description = models.TextField(
+        max_length=300,
+        blank=True,
+        null=True
+    )
+    sub_total = models.DecimalField(
         max_digits=10,
-        decimal_places=2,
-        default=0.0,
-        verbose_name="Price per item (NPR)",
+        decimal_places=2
     )
-    total_value = models.DecimalField(max_digits=10, decimal_places=2)
-
-    def save(self, *args, **kwargs):
-        """
-        Calculates the total value before saving the Purchase instance.
-        """
-        self.total_value = self.price * self.quantity
-        super().save(*args, **kwargs)
-        # Update the item quantity
-        self.item.quantity += self.quantity
-        self.item.save()
-
-    def __str__(self):
-        """
-        Returns a string representation of the Purchase instance.
-        """
-        return str(self.item.name)
+    grand_total = models.DecimalField(
+        max_digits=10,
+        decimal_places=2
+    )
+    remarks = models.TextField(
+        blank=True,
+        null=True
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True
+    )
 
     class Meta:
-        ordering = ["order_date"]
+        db_table = 'purchase'
+        ordering = ['date']
 
+    def __str__(self):
+        return f"Purchase #{self.pk}"
 
 class OtherPurchase(models.Model):
     """

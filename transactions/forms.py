@@ -12,33 +12,94 @@ class BootstrapMixin(forms.ModelForm):
             field.widget.attrs.setdefault('class', 'form-control')
 
 
-class PurchaseForm(BootstrapMixin, forms.ModelForm):
+# class PurchaseForm(BootstrapMixin, forms.ModelForm):
+#     """
+#     A form for creating and updating Purchase instances.
+#     """
+#     class Meta:
+#         model = Purchase
+#         fields = [
+#             'item',  'price', 'description', 'vendor',
+#             'quantity', 'delivery_date', 'delivery_status'
+#         ]
+#         widgets = {
+#             'delivery_date': forms.DateInput(
+#                 attrs={
+#                     'class': 'form-control',
+#                     'type': 'datetime-local'
+#                 }
+#             ),
+#             'description': forms.Textarea(
+#                 attrs={'rows': 1, 'cols': 40}
+#             ),
+#             'quantity': forms.NumberInput(
+#                 attrs={'class': 'form-control'}
+#             ),
+#             'delivery_status': forms.Select(
+#                 attrs={'class': 'form-control'}
+#             ),
+#             'price': forms.NumberInput(
+#                 attrs={'class': 'form-control'}
+#             ),
+#         }
+
+class PurchaseForm(forms.ModelForm):
     """
-    A form for creating and updating Purchase instances.
+    A form for creating and updating Purchase instances
+    with only the desired fields.
     """
     class Meta:
         model = Purchase
         fields = [
-            'item',  'price', 'description', 'vendor',
-            'quantity', 'delivery_date', 'delivery_status'
+            'raw_material_vendor',
+            'date',
+            'description',
+            'sub_total',
+            'grand_total',
+            'remarks',
         ]
         widgets = {
-            'delivery_date': forms.DateInput(
+            # ForeignKey → <select>
+            'raw_material_vendor': forms.Select(
                 attrs={
                     'class': 'form-control',
-                    'type': 'datetime-local'
+                    'placeholder': 'Choose a vendor',
                 }
             ),
+            # HTML5 date picker
+            'date': forms.DateInput(
+                attrs={
+                    'class': 'form-control',
+                    'type': 'date'
+                }
+            ),
+            # Free‑form text
             'description': forms.Textarea(
-                attrs={'rows': 1, 'cols': 40}
+                attrs={
+                    'class': 'form-control',
+                    'rows': 2,
+                    'placeholder': 'Optional description'
+                }
             ),
-            'quantity': forms.NumberInput(
-                attrs={'class': 'form-control'}
+            # Decimal fields with step for cents
+            'sub_total': forms.NumberInput(
+                attrs={
+                    'class': 'form-control',
+                    'step': '0.01'
+                }
             ),
-            'delivery_status': forms.Select(
-                attrs={'class': 'form-control'}
+            'grand_total': forms.NumberInput(
+                attrs={
+                    'class': 'form-control',
+                    'step': '0.01'
+                }
             ),
-            'price': forms.NumberInput(
-                attrs={'class': 'form-control'}
+            # Optional remarks
+            'remarks': forms.Textarea(
+                attrs={
+                    'class': 'form-control',
+                    'rows': 2,
+                    'placeholder': 'Optional remarks'
+                }
             ),
         }

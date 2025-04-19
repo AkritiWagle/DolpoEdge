@@ -21,18 +21,34 @@ class SaleTable(tables.Table):
         order_by_field = 'sort'
 
 
+# class PurchaseTable(tables.Table):
+#     class Meta:
+#         model = Purchase
+#         template_name = "django_tables2/semantic.html"
+#         fields = (
+#             'item',
+#             'vendor',
+#             'order_date',
+#             'delivery_date',
+#             'quantity',
+#             'delivery_status',
+#             'price',
+#             'total_value'
+#         )
+#         order_by_field = 'sort'
+
 class PurchaseTable(tables.Table):
     class Meta:
         model = Purchase
         template_name = "django_tables2/semantic.html"
         fields = (
-            'item',
-            'vendor',
-            'order_date',
-            'delivery_date',
-            'quantity',
-            'delivery_status',
-            'price',
-            'total_value'
+            "raw_material_vendor",
+            "date",
+            "description",
+            "sub_total",
+            "grand_total",
+            "remarks",
+            "created_at",
+            "updated_at",
         )
-        order_by_field = 'sort'
+        order_by = "date"
