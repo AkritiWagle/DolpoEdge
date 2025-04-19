@@ -117,7 +117,7 @@ def export_purchases_to_excel(request):
             delivery_date,
             purchase.quantity,
             purchase.get_delivery_status_display(),
-            purchase.price,
+            purchase.selling_price,
             purchase.total_value
         ])
 
@@ -201,7 +201,7 @@ def SaleCreateView(request):
                     for item in items:
                         if not all(
                             k in item for k in [
-                                "id", "price", "quantity", "total_item"
+                                "id", "selling_price", "quantity", "total_item"
                             ]
                         ):
                             raise ValueError("Item is missing required fields")
@@ -213,7 +213,7 @@ def SaleCreateView(request):
                         detail_attributes = {
                             "sale": new_sale,
                             "item": item_instance,
-                            "price": float(item["price"]),
+                            "price": float(item["selling_price"]),
                             "quantity": int(item["quantity"]),
                             "total_detail": float(item["total_item"])
                         }
