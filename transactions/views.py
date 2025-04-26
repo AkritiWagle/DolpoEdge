@@ -11,6 +11,8 @@ from django.db import transaction
 # Class-based views
 from django.views.generic import DetailView, ListView
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
+from django.views.decorators.http import require_http_methods
+
 
 # Authentication and permissions
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
@@ -19,9 +21,9 @@ from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from openpyxl import Workbook
 
 # Local app imports
-from store.models import Item
+from store.models import Item,RawMaterial
 from accounts.models import Customer
-from .models import Sale, Purchase, SaleDetail
+from .models import PurchaseDetailed, Sale, Purchase, SaleDetail
 from .forms import PurchaseForm
 
 
@@ -132,6 +134,18 @@ def export_purchases_to_excel(request):
 
     return response
 
+@require_http_methods(["GET"])
+def get_raw_materials(request):
+    search = request.GET.get('q', '')
+    materials = RawMaterial.objects.filter(name__icontains=search)[:10]
+    results = [{
+        'id': m.id,
+        'text': m.name,
+        'uom': m.unit_of_measure,
+        'unit_price': str(m.unit_price),
+        'stock': m.quantity
+    } for m in materials]
+    return JsonResponse(results, safe=False)
 
 class SaleListView(LoginRequiredMixin, ListView):
     """
@@ -312,21 +326,61 @@ class PurchaseDetailView(LoginRequiredMixin, DetailView):
     template_name = "transactions/purchasedetail.html"
 
 
-class PurchaseCreateView(LoginRequiredMixin, CreateView):
-    """
-    View to create a new purchase.
-    """
+# class PurchaseCreateView(LoginRequiredMixin, CreateView):
+#     """
+#     View to create a new purchase.
+#     """
 
+#     model = Purchase
+#     form_class = PurchaseForm
+#     template_name = "transactions/purchases_form.html"
+
+#     def get_success_url(self):
+#         """
+#         Redirect to the purchases list after successful form submission.
+#         """
+#         return reverse("purchaseslist")
+
+
+class PurchaseCreateView(LoginRequiredMixin, CreateView):
     model = Purchase
     form_class = PurchaseForm
-    template_name = "transactions/purchases_form.html"
+    template_name = 'transactions/purchase_create.html'
 
-    def get_success_url(self):
-        """
-        Redirect to the purchases list after successful form submission.
-        """
-        return reverse("purchaseslist")
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['purchase_form'] = context['form']
+        return context
 
+    def form_valid(self, form):
+        try:
+            with transaction.atomic():
+                purchase = form.save()
+                
+                # Save purchase details
+                items = json.loads(self.request.POST.get('items', '[]'))
+                for item in items:
+                    raw_material = RawMaterial.objects.get(id=item['id'])
+                    PurchaseDetailed.objects.create(
+                        purchase=purchase,
+                        raw_material=raw_material,
+                        quantity=item['quantity'],
+                        unit_price=item['unit_price'],
+                        expiration_date=item['expiration_date'],
+                        total_price=item['quantity'] * item['unit_price']
+                    )
+                    # Update raw material stock
+                    raw_material.quantity += item['quantity']
+                    raw_material.save()
+                
+                return JsonResponse({'status': 'success'})
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'error': str(e)}, status=400)
+
+    def post(self, request, *args, **kwargs):
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return self.form_valid(self.get_form())
+        return super().post(request, *args, **kwargs)
 
 class PurchaseUpdateView(LoginRequiredMixin, UpdateView):
     """

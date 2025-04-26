@@ -1,4 +1,5 @@
 # Django core imports
+from django import views
 from django.urls import path
 from django.conf import settings
 from django.conf.urls.static import static
@@ -14,6 +15,7 @@ from .views import (
     SaleDetailView,
     SaleCreateView,
     SaleDeleteView,
+    get_raw_materials,
 
     export_sales_to_excel,
     export_purchases_to_excel
@@ -48,6 +50,8 @@ urlpatterns = [
          'sale/<slug:slug>/delete/', SaleDeleteView.as_view(),
          name='sale-delete'
      ),
+     path('get-raw-materials/', get_raw_materials, name='get_raw_materials'),
+
 
     # Sales and purchases export
     path('sales/export/', export_sales_to_excel, name='sales-export'),

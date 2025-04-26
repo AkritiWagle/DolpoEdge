@@ -1,5 +1,7 @@
 from django import forms
-from .models import Purchase
+
+from store.models import RawMaterial
+from .models import Purchase, PurchaseDetailed
 
 
 class BootstrapMixin(forms.ModelForm):
@@ -12,94 +14,88 @@ class BootstrapMixin(forms.ModelForm):
             field.widget.attrs.setdefault('class', 'form-control')
 
 
-# class PurchaseForm(BootstrapMixin, forms.ModelForm):
+# class PurchaseForm(forms.ModelForm):
 #     """
-#     A form for creating and updating Purchase instances.
+#     A form for creating and updating Purchase instances
+#     with only the desired fields.
 #     """
 #     class Meta:
 #         model = Purchase
 #         fields = [
-#             'item',  'price', 'description', 'vendor',
-#             'quantity', 'delivery_date', 'delivery_status'
+#             'raw_material_vendor',
+#             'date',
+#             'description',
+#             'sub_total',
+#             'grand_total',
+#             'remarks',
 #         ]
 #         widgets = {
-#             'delivery_date': forms.DateInput(
+#             # ForeignKey → <select>
+#             'raw_material_vendor': forms.Select(
 #                 attrs={
 #                     'class': 'form-control',
-#                     'type': 'datetime-local'
+#                     'placeholder': 'Choose a vendor',
 #                 }
 #             ),
+#             # HTML5 date picker
+#             'date': forms.DateInput(
+#                 attrs={
+#                     'class': 'form-control',
+#                     'type': 'date'
+#                 }
+#             ),
+#             # Free‑form text
 #             'description': forms.Textarea(
-#                 attrs={'rows': 1, 'cols': 40}
+#                 attrs={
+#                     'class': 'form-control',
+#                     'rows': 2,
+#                     'placeholder': 'Optional description'
+#                 }
 #             ),
-#             'quantity': forms.NumberInput(
-#                 attrs={'class': 'form-control'}
+#             # Decimal fields with step for cents
+#             'sub_total': forms.NumberInput(
+#                 attrs={
+#                     'class': 'form-control',
+#                     'step': '0.01'
+#                 }
 #             ),
-#             'delivery_status': forms.Select(
-#                 attrs={'class': 'form-control'}
+#             'grand_total': forms.NumberInput(
+#                 attrs={
+#                     'class': 'form-control',
+#                     'step': '0.01'
+#                 }
 #             ),
-#             'price': forms.NumberInput(
-#                 attrs={'class': 'form-control'}
+#             # Optional remarks
+#             'remarks': forms.Textarea(
+#                 attrs={
+#                     'class': 'form-control',
+#                     'rows': 2,
+#                     'placeholder': 'Optional remarks'
+#                 }
 #             ),
 #         }
 
 class PurchaseForm(forms.ModelForm):
-    """
-    A form for creating and updating Purchase instances
-    with only the desired fields.
-    """
     class Meta:
         model = Purchase
-        fields = [
-            'raw_material_vendor',
-            'date',
-            'description',
-            'sub_total',
-            'grand_total',
-            'remarks',
-        ]
+        fields = ['raw_material_vendor', 'date', 'remarks']
         widgets = {
-            # ForeignKey → <select>
-            'raw_material_vendor': forms.Select(
-                attrs={
-                    'class': 'form-control',
-                    'placeholder': 'Choose a vendor',
-                }
-            ),
-            # HTML5 date picker
-            'date': forms.DateInput(
-                attrs={
-                    'class': 'form-control',
-                    'type': 'date'
-                }
-            ),
-            # Free‑form text
-            'description': forms.Textarea(
-                attrs={
-                    'class': 'form-control',
-                    'rows': 2,
-                    'placeholder': 'Optional description'
-                }
-            ),
-            # Decimal fields with step for cents
-            'sub_total': forms.NumberInput(
-                attrs={
-                    'class': 'form-control',
-                    'step': '0.01'
-                }
-            ),
-            'grand_total': forms.NumberInput(
-                attrs={
-                    'class': 'form-control',
-                    'step': '0.01'
-                }
-            ),
-            # Optional remarks
-            'remarks': forms.Textarea(
-                attrs={
-                    'class': 'form-control',
-                    'rows': 2,
-                    'placeholder': 'Optional remarks'
-                }
-            ),
+            'date': forms.DateInput(attrs={'type': 'date'}),
         }
+
+class PurchaseItemForm(forms.ModelForm):
+    expiration_date = forms.DateField(
+        widget=forms.DateInput(attrs={'type': 'date'}),
+        required=True
+    )
+
+    class Meta:
+        model = PurchaseDetailed
+        fields = ['raw_material', 'quantity', 'unit_price']
+        widgets = {
+            'unit_price': forms.NumberInput(attrs={'step': '0.01'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['raw_material'].queryset = RawMaterial.objects.all()
