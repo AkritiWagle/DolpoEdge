@@ -112,57 +112,6 @@ class SaleDetail(models.Model):
             f"Quantity: {self.quantity}"
         )
 
-
-# class Purchase(models.Model):
-#     """
-#     Represents a purchase of an item,
-#     including vendor details and delivery status.
-#     """
-
-#     slug = AutoSlugField(unique=True, populate_from="vendor")
-#     item = models.ForeignKey(Item, on_delete=models.CASCADE)
-#     description = models.TextField(max_length=300, blank=True, null=True)
-#     vendor = models.ForeignKey(
-#         Vendor, related_name="purchases", on_delete=models.CASCADE
-#     )
-#     order_date = models.DateTimeField(auto_now_add=True)
-#     delivery_date = models.DateTimeField(
-#         blank=True, null=True, verbose_name="Delivery Date"
-#     )
-#     quantity = models.PositiveIntegerField(default=0)
-#     delivery_status = models.CharField(
-#         choices=DELIVERY_CHOICES,
-#         max_length=1,
-#         default="P",
-#         verbose_name="Delivery Status",
-#     )
-#     price = models.DecimalField(
-#         max_digits=10,
-#         decimal_places=2,
-#         default=0.0,
-#         verbose_name="Price per item (NPR)",
-#     )
-#     total_value = models.DecimalField(max_digits=10, decimal_places=2)
-
-#     def save(self, *args, **kwargs):
-#         """
-#         Calculates the total value before saving the Purchase instance.
-#         """
-#         self.total_value = self.price * self.quantity
-#         super().save(*args, **kwargs)
-#         # Update the item quantity
-#         self.item.quantity += self.quantity
-#         self.item.save()
-
-#     def __str__(self):
-#         """
-#         Returns a string representation of the Purchase instance.
-#         """
-#         return str(self.item.name)
-
-#     class Meta:
-#         ordering = ["order_date"]
-
 class Purchase(models.Model):
     slug = AutoSlugField(
         unique=True,
@@ -352,11 +301,7 @@ class OtherPurchaseDetailed(models.Model):
         self.total_price = self.unit_price * self.quantity
         super().save(*args, **kwargs)
 
-    # def clean(self):
-    #     """Validation for pricing consistency"""
-    #     if self.total_price != self.unit_price * self.quantity:
-    #         raise ValidationError("Total price must equal unit price × quantity")
-
+ 
     def __str__(self):
         return f"{self.get_type_display()} - {self.quantity} {self.get_unit_of_measure_display()}"
 
@@ -459,19 +404,7 @@ class OfferDiscountDetailed(models.Model):
 
     def clean(self):
         """Validate relationship constraints"""
-        # errors = {}
         
-        # # Ensure only one of offer/discount is set based on type
-        # if self.type == 'offer' and not self.offer:
-        #     errors['offer'] = 'Offer must be set for offer type'
-        # if self.type == 'discount' and not self.discount:
-        #     errors['discount'] = 'Discount must be set for discount type'
-        # if self.offer and self.discount:
-        #     errors['offer'] = 'Cannot have both offer and discount references'
-            
-        # if errors:
-        #     raise ValidationError(errors)
-
     def save(self, *args, **kwargs):
         self.full_clean()
         super().save(*args, **kwargs)

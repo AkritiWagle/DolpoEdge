@@ -1,5 +1,5 @@
 from django import forms
-from .models import Item, Category, Delivery, RawMaterial
+from .models import Item, Category, Delivery, RawMaterial, Vendor
 
 
 class ItemForm(forms.ModelForm):
@@ -108,3 +108,17 @@ class RawMaterialForm(forms.ModelForm):
             'description': forms.Textarea(attrs={'rows': 3, 'class': 'form-control'}),
             'remarks': forms.Textarea(attrs={'rows': 3, 'class': 'form-control'}),
         }
+
+# class RawMaterialForm(forms.ModelForm):
+#     class Meta:
+#         model = RawMaterial
+#         fields = '__all__'
+#         widgets = {
+#             'expiration_date': forms.DateInput(attrs={'type': 'date'}),
+#             'description': forms.Textarea(attrs={'rows': 3}),
+#             'remarks': forms.Textarea(attrs={'rows': 3}),
+#         }
+    
+#     def __init__(self, *args, **kwargs):
+#         super().__init__(*args, **kwargs)
+#         self.fields['vendor'].queryset = Vendor.objects.all()
