@@ -107,7 +107,7 @@
             </li>
 
             <li class="nav-item mb-2 dropdown">
-                <a class="nav-link text-light {% if request.resolver_match.url_name == 'purchaseslist' or request.resolver_match.url_name == 'saleslist' %}active{% endif %} dropdown-toggle" href="#" id="productsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                <a class="nav-link text-light {% if request.resolver_match.url_name == 'purchaseslist' or request.resolver_match.url_name == 'saleslist' or request.resolver_match.url_name == 'batch-list' %}active{% endif %} dropdown-toggle" href="#" id="productsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                     <i class="fa fa-folder me-2"></i> Inventory Management
                 </a>
                 <ul class="dropdown-menu bg-dark border-0" aria-labelledby="productsDropdown">
