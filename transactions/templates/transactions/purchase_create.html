@@ -111,7 +111,7 @@ $(document).ready(function() {
     var multiplicator = Math.pow(10, digits);
     n = parseFloat((n * multiplicator).toFixed(11));
     return Math.round(n) / multiplicator;
-}
+    }
     
     // Select2 for raw materials
     $('#search_raw_materials').select2({
@@ -219,10 +219,36 @@ $(document).ready(function() {
     var csrftoken = $('input[name="csrfmiddlewaretoken"]').val();
 
 
-   
-// Modify the submit handler to match sale_create's structure
-$('#form_purchase').on('submit', function (event) {
+      
+ // Modify the submit handler to match sale_create's structure
+ $('#form_purchase').on('submit', function (event) {
     event.preventDefault();
+
+    const purchaseDateVal = $('#id_date').val();
+    const purchaseDate = new Date(purchaseDateVal);
+
+    // 2. Validate each item's expiry date
+    for (let i = 0; i < purchaseItems.length; i++) {
+        const item = purchaseItems[i];
+        const expVal = item.expiration_date;
+        if (!expVal) {
+            Swal.fire(
+                'Error!',
+                `Please set an expiration date for “${item.name}”.`,
+                'error'
+            );
+            return;
+        }
+        const expDate = new Date(expVal);
+        if (expDate < purchaseDate) {
+            Swal.fire(
+                'Error!',
+                `Expiration date for “${item.name}” (${expVal}) cannot be earlier than the purchase date (${purchaseDateVal}).`,
+                'error'
+            );
+            return;
+        }
+    }
 
     // Gather purchase details
     const formData = {
