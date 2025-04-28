@@ -486,6 +486,8 @@ class BatchCreateView(LoginRequiredMixin, CreateView):
             logger.error(f"Error creating batch: {str(e)}")
             return JsonResponse({'status': 'error', 'error': str(e)}, status=500)
         
+from django.db.models import F
+
 class BatchDeleteView(LoginRequiredMixin, DeleteView):
     model = Batch
     template_name = "transactions/batch_confirm_delete.html"
@@ -494,19 +496,26 @@ class BatchDeleteView(LoginRequiredMixin, DeleteView):
     def delete(self, request, *args, **kwargs):
         try:
             with transaction.atomic():
+                # Get batch and product FIRST
                 batch = self.get_object()
-                # Revert product quantity only
                 product = batch.product
-                product.quantity -= batch.quantity
-                product.save()
+                quantity_to_remove = batch.quantity
                 
-                # We can't restore raw materials because we don't have usage records
-                # Add warning message
-                messages.warning(request, 
-                    'Batch deleted but raw materials were not restored (no usage tracking)'
+                # Update product quantity using atomic operation
+                Item.objects.filter(id=product.id).update(
+                    quantity=F('quantity') - quantity_to_remove
                 )
                 
-                return super().delete(request, *args, **kwargs)
+                # Delete the batch AFTER successful product update
+                response = super().delete(request, *args, **kwargs)
+                
+                messages.success(
+                    request,
+                    f'Successfully deleted batch and removed {quantity_to_remove} units from {product.name}'
+                )
+                return response
+                
         except Exception as e:
+            logger.error(f"Batch deletion error: {str(e)}")
             messages.error(request, f'Error deleting batch: {str(e)}')
             return redirect(self.success_url)
