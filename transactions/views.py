@@ -370,6 +370,8 @@ def PurchaseCreateView(request):
                             quantity=item['quantity'],
                             total_price=Decimal(item['unit_price']) * item['quantity'],
                         )
+                    # Auto-generate description
+                    purchase.update_description()
 
                 return JsonResponse({
                     'status': 'success',

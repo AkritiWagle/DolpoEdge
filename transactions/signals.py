@@ -22,3 +22,7 @@ def update_raw_material_inventory(sender, instance, created, **kwargs):
     if instance.expiration_date:
         raw_material.expiration_date = instance.expiration_date
     raw_material.save()
+    
+def update_purchase_description(sender, instance, **kwargs):
+    """Update parent purchase description when details change"""
+    instance.purchase.update_description()

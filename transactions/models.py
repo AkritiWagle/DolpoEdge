@@ -153,6 +153,17 @@ class Purchase(models.Model):
         auto_now=True
     )
 
+
+    def update_description(self):
+        """Generate description from purchase details"""
+        details = self.purchasedetailed_set.all()
+        items = [
+            f"{detail.raw_material.name} - {detail.quantity} {detail.raw_material.unit_of_measure}"
+            for detail in details
+        ]
+        self.description = ", ".join(items)
+        self.save(update_fields=['description'])
+        
     class Meta:
         db_table = 'purchase'
         ordering = ['date']
