@@ -56,18 +56,6 @@
                     </div>
                     <div class="card-body">
                         {% csrf_token %}
-                        <!-- <div class="mb-3">
-                            <label class="form-label">Vendor</label>
-                            {{ purchase_form.raw_material_vendor }}
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Purchase Date</label>
-                            {{ purchase_form.date }}
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Remarks</label>
-                            {{ purchase_form.remarks }}
-                        </div> -->
                         <div class="mb-3">
                             <label class="form-label">Vendor</label>
                             {{ form.raw_material_vendor }}
@@ -172,7 +160,7 @@ $(document).ready(function() {
                     <td><input type="number" class="form-control unit-price" 
                          value="${item.unit_price}" step="0.01" required></td>
                     <td><input type="date" class="form-control expiry-date" 
-                         value="${item.expiration_date}"></td>
+                         value="${item.expiration_date}" required></td>
                     <td class="total">${item.total.toFixed(2)}</td>
                     <td>
                         <button class="btn btn-danger btn-sm remove-item">
