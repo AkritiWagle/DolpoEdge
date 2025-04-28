@@ -157,7 +157,7 @@ class SaleListView(LoginRequiredMixin, ListView):
     template_name = "transactions/sales_list.html"
     context_object_name = "sales"
     paginate_by = 10
-    ordering = ['date_added']
+    ordering = ['-id']
 
 
 class SaleDetailView(LoginRequiredMixin, DetailView):
@@ -316,6 +316,8 @@ class PurchaseListView(LoginRequiredMixin, ListView):
     template_name = "transactions/purchases_list.html"
     context_object_name = "purchases"
     paginate_by = 10
+    ordering = ['-id']
+
 
 
 class PurchaseDetailView(LoginRequiredMixin, DetailView):
