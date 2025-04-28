@@ -175,6 +175,8 @@ class PurchaseDetailed(models.Model):
         max_length=15,
         choices=PURCHASE_TYPE_CHOICES
     )
+    expiration_date = models.DateField(null=True, blank=True)
+
     raw_material = models.ForeignKey(
         'store.RawMaterial',
         on_delete=models.CASCADE,

@@ -1,4 +1,5 @@
 # Standard library imports
+from decimal import Decimal
 import json
 import logging
 
@@ -22,7 +23,7 @@ from openpyxl import Workbook
 
 # Local app imports
 from store.models import Item,RawMaterial
-from accounts.models import Customer
+from accounts.models import Customer, Vendor
 from .models import PurchaseDetailed, Sale, Purchase, SaleDetail
 from .forms import PurchaseForm
 
@@ -326,61 +327,63 @@ class PurchaseDetailView(LoginRequiredMixin, DetailView):
     template_name = "transactions/purchasedetail.html"
 
 
-# class PurchaseCreateView(LoginRequiredMixin, CreateView):
-#     """
-#     View to create a new purchase.
-#     """
+def PurchaseCreateView(request):
+    context = {
+        "active_icon": "purchases",
+        "vendors": Vendor.objects.all(),
+        "form": PurchaseForm()
+    }
 
-#     model = Purchase
-#     form_class = PurchaseForm
-#     template_name = "transactions/purchases_form.html"
+    if request.method == 'POST':
+        if is_ajax(request):
+            try:
+                data = json.loads(request.body)
+                logger.info(f"Received purchase data: {data}")
 
-#     def get_success_url(self):
-#         """
-#         Redirect to the purchases list after successful form submission.
-#         """
-#         return reverse("purchaseslist")
+                # Validate required fields
+                required_fields = ['raw_material_vendor', 'date', 'items']
+                for field in required_fields:
+                    if field not in data:
+                        raise ValueError(f"Missing required field: {field}")
 
-
-class PurchaseCreateView(LoginRequiredMixin, CreateView):
-    model = Purchase
-    form_class = PurchaseForm
-    template_name = 'transactions/purchase_create.html'
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['purchase_form'] = context['form']
-        return context
-
-    def form_valid(self, form):
-        try:
-            with transaction.atomic():
-                purchase = form.save()
-                
-                # Save purchase details
-                items = json.loads(self.request.POST.get('items', '[]'))
-                for item in items:
-                    raw_material = RawMaterial.objects.get(id=item['id'])
-                    PurchaseDetailed.objects.create(
-                        purchase=purchase,
-                        raw_material=raw_material,
-                        quantity=item['quantity'],
-                        unit_price=item['unit_price'],
-                        expiration_date=item['expiration_date'],
-                        total_price=item['quantity'] * item['unit_price']
+                with transaction.atomic():
+                    # Create Purchase
+                    purchase = Purchase.objects.create(
+                        raw_material_vendor_id=data['raw_material_vendor'],
+                        date=data['date'],
+                        remarks=data.get('remarks', ''),
+                        sub_total=Decimal(data.get('sub_total', 0)),
+                        grand_total=Decimal(data.get('grand_total', 0))
                     )
-                    # Update raw material stock
-                    raw_material.quantity += item['quantity']
-                    raw_material.save()
-                
-                return JsonResponse({'status': 'success'})
-        except Exception as e:
-            return JsonResponse({'status': 'error', 'error': str(e)}, status=400)
 
-    def post(self, request, *args, **kwargs):
-        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-            return self.form_valid(self.get_form())
-        return super().post(request, *args, **kwargs)
+                    # Process items
+                    for item in data['items']:
+                        raw_material = RawMaterial.objects.get(id=item['id'])
+                        
+                        # Create PurchaseDetailed entry
+                        PurchaseDetailed.objects.create(
+                            purchase=purchase,
+                            type='consumable',  # Set default or get from frontend
+                            raw_material=raw_material,
+                            unit_of_measure=raw_material.unit_of_measure,
+                            unit_price=Decimal(item['unit_price']),
+                            quantity=item['quantity'],
+                            total_price=Decimal(item['unit_price']) * item['quantity'],
+                        )
+
+                return JsonResponse({
+                    'status': 'success',
+                    'message': 'Purchase created successfully!',
+                    'redirect': '/transactions/purchases/'
+                })
+
+            except RawMaterial.DoesNotExist:
+                return JsonResponse({'status': 'error', 'message': 'One or more raw materials not found'}, status=400)
+            except Exception as e:
+                logger.error(f"Error creating purchase: {str(e)}", exc_info=True)
+                return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+
+    return render(request, "transactions/purchase_create.html", context=context)
 
 class PurchaseUpdateView(LoginRequiredMixin, UpdateView):
     """

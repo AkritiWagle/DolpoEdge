@@ -56,7 +56,7 @@
                     </div>
                     <div class="card-body">
                         {% csrf_token %}
-                        <div class="mb-3">
+                        <!-- <div class="mb-3">
                             <label class="form-label">Vendor</label>
                             {{ purchase_form.raw_material_vendor }}
                         </div>
@@ -67,6 +67,18 @@
                         <div class="mb-3">
                             <label class="form-label">Remarks</label>
                             {{ purchase_form.remarks }}
+                        </div> -->
+                        <div class="mb-3">
+                            <label class="form-label">Vendor</label>
+                            {{ form.raw_material_vendor }}
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Purchase Date</label>
+                            {{ form.date }}
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Remarks</label>
+                            {{ form.remarks }}
                         </div>
                         <hr>
                         <div class="mb-3">
@@ -91,6 +103,15 @@
 <script>
 $(document).ready(function() {
     let purchaseItems = [];
+
+    function roundTo(n, digits) {
+    if (digits === undefined) {
+        digits = 0;
+    }
+    var multiplicator = Math.pow(10, digits);
+    n = parseFloat((n * multiplicator).toFixed(11));
+    return Math.round(n) / multiplicator;
+}
     
     // Select2 for raw materials
     $('#search_raw_materials').select2({
@@ -198,35 +219,66 @@ $(document).ready(function() {
     var csrftoken = $('input[name="csrfmiddlewaretoken"]').val();
 
 
-    $('#form_purchase').submit(function(e) {
-        e.preventDefault();
-        
-        const formData = {
-            vendor: $('#id_raw_material_vendor').val(),
-            date: $('#id_date').val(),
-            remarks: $('#id_remarks').val(),
-            items: purchaseItems,
-            sub_total: $('#sub_total').val(),
-            grand_total: $('#grand_total').val(),
-            csrfmiddlewaretoken: $('input[name=csrfmiddlewaretoken]').val()
-        };
+   
+// Modify the submit handler to match sale_create's structure
+$('#form_purchase').on('submit', function (event) {
+    event.preventDefault();
 
-        $.ajax({
-            url: '{% url "purchase-create" %}',
-            method: 'POST',
-            contentType: 'application/json',
-            headers: {
-                    'X-CSRFToken': csrftoken
-                },
-            data: JSON.stringify(formData),
-            success: function(response) {
+    // Gather purchase details
+    const formData = {
+        raw_material_vendor: $('#id_raw_material_vendor').val(),
+        date: $('#id_date').val(),
+        remarks: $('#id_remarks').val(),
+        sub_total: $('#sub_total').val(),
+        grand_total: $('#grand_total').val(),
+        items: purchaseItems.map(item => ({
+            id: item.id,
+            quantity: item.quantity,
+            unit_price: item.unit_price,
+            expiration_date: item.expiration_date
+        }))
+    };
+
+    // Validate required fields
+    if (!formData.raw_material_vendor) {
+        Swal.fire('Error!', 'Please select a vendor', 'error');
+        return;
+    }
+    if (purchaseItems.length === 0) {
+        Swal.fire('Error!', 'Please add at least one item', 'error');
+        return;
+    }
+
+    $.ajax({
+        url: '{% url "purchase-create" %}',
+        type: 'POST',
+        contentType: 'application/json',
+        headers: {
+            'X-CSRFToken': csrftoken
+        },
+        data: JSON.stringify(formData),
+        success: function (response) {
+            // Handle success response
+            purchaseItems = [];
+            refreshItemsTable();
+            calculateTotals();
+            Swal.fire({
+                icon: 'success',
+                title: 'Success',
+                text: 'Purchase has been completed successfully!'
+            }).then(() => {
                 window.location.href = '{% url "purchaseslist" %}';
-            },
-            error: function(xhr) {
-                alert('Error saving purchase: ' + xhr.responseJSON.error);
-            }
-        });
+            });
+        },
+        error: function (xhr) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: xhr.responseJSON.error || 'An error occurred while processing the purchase!'
+            });
+        }
     });
+});
 });
 </script>
 {% endblock %}

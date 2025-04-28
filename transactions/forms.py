@@ -1,5 +1,6 @@
 from django import forms
 
+from accounts.models import Vendor
 from store.models import RawMaterial
 from .models import Purchase, PurchaseDetailed
 
@@ -14,74 +15,31 @@ class BootstrapMixin(forms.ModelForm):
             field.widget.attrs.setdefault('class', 'form-control')
 
 
-# class PurchaseForm(forms.ModelForm):
-#     """
-#     A form for creating and updating Purchase instances
-#     with only the desired fields.
-#     """
-#     class Meta:
-#         model = Purchase
-#         fields = [
-#             'raw_material_vendor',
-#             'date',
-#             'description',
-#             'sub_total',
-#             'grand_total',
-#             'remarks',
-#         ]
-#         widgets = {
-#             # ForeignKey → <select>
-#             'raw_material_vendor': forms.Select(
-#                 attrs={
-#                     'class': 'form-control',
-#                     'placeholder': 'Choose a vendor',
-#                 }
-#             ),
-#             # HTML5 date picker
-#             'date': forms.DateInput(
-#                 attrs={
-#                     'class': 'form-control',
-#                     'type': 'date'
-#                 }
-#             ),
-#             # Free‑form text
-#             'description': forms.Textarea(
-#                 attrs={
-#                     'class': 'form-control',
-#                     'rows': 2,
-#                     'placeholder': 'Optional description'
-#                 }
-#             ),
-#             # Decimal fields with step for cents
-#             'sub_total': forms.NumberInput(
-#                 attrs={
-#                     'class': 'form-control',
-#                     'step': '0.01'
-#                 }
-#             ),
-#             'grand_total': forms.NumberInput(
-#                 attrs={
-#                     'class': 'form-control',
-#                     'step': '0.01'
-#                 }
-#             ),
-#             # Optional remarks
-#             'remarks': forms.Textarea(
-#                 attrs={
-#                     'class': 'form-control',
-#                     'rows': 2,
-#                     'placeholder': 'Optional remarks'
-#                 }
-#             ),
-#         }
-
 class PurchaseForm(forms.ModelForm):
     class Meta:
         model = Purchase
         fields = ['raw_material_vendor', 'date', 'remarks']
         widgets = {
-            'date': forms.DateInput(attrs={'type': 'date'}),
+            'date': forms.DateInput(attrs={
+                'type': 'date',
+                'class': 'form-control',
+                'id': 'id_date'
+            }),
+            'raw_material_vendor': forms.Select(attrs={
+                'class': 'form-select',
+                'id': 'id_raw_material_vendor'
+            }),
+            'remarks': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 2,
+                'id': 'id_remarks'
+            }),
         }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['raw_material_vendor'].queryset = Vendor.objects.all()
+        self.fields['raw_material_vendor'].empty_label = "Select Vendor"
 
 class PurchaseItemForm(forms.ModelForm):
     expiration_date = forms.DateField(

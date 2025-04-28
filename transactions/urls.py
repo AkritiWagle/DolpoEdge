@@ -29,10 +29,9 @@ urlpatterns = [
          'purchase/<slug:slug>/', PurchaseDetailView.as_view(),
          name='purchase-detail'
      ),
-    path(
-         'new-purchase/', PurchaseCreateView.as_view(),
-         name='purchase-create'
-     ),
+    path('get-raw-materials/', get_raw_materials, name='get_raw_materials'),
+
+    path('new-purchase/', PurchaseCreateView, name='purchase-create'),
     path(
          'purchase/<int:pk>/update/', PurchaseUpdateView.as_view(),
          name='purchase-update'
@@ -50,7 +49,8 @@ urlpatterns = [
          'sale/<slug:slug>/delete/', SaleDeleteView.as_view(),
          name='sale-delete'
      ),
-     path('get-raw-materials/', get_raw_materials, name='get_raw_materials'),
+    path('new-purchase/', PurchaseCreateView, name='purchase-create'),
+
 
 
     # Sales and purchases export
