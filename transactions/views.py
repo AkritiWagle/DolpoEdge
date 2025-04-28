@@ -5,12 +5,16 @@ import logging
 
 # Django core imports
 from django.http import JsonResponse, HttpResponse
-from django.urls import reverse
-from django.shortcuts import render
+from django.urls import reverse, reverse_lazy
+from django.shortcuts import redirect, render
 from django.db import transaction
+from django.contrib import messages
+from django.core.exceptions import ValidationError
+
+
 
 # Class-based views
-from django.views.generic import DetailView, ListView
+from django.views.generic import DetailView, ListView, CreateView
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.views.decorators.http import require_http_methods
 
@@ -22,7 +26,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from openpyxl import Workbook
 
 # Local app imports
-from store.models import Item,RawMaterial
+from store.models import Item,RawMaterial, Batch
 from accounts.models import Customer, Vendor
 from .models import PurchaseDetailed, Sale, Purchase, SaleDetail
 from .forms import PurchaseForm
@@ -424,3 +428,85 @@ class PurchaseDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
         Allow deletion only for superusers.
         """
         return self.request.user.is_superuser
+
+
+class BatchListView(LoginRequiredMixin, ListView):
+    model = Batch
+    template_name = "transactions/batch_list.html"
+    context_object_name = "batches"
+    paginate_by = 10
+    ordering = ['-manufacturing_date']
+
+class BatchCreateView(LoginRequiredMixin, CreateView):
+    model = Batch
+    template_name = "transactions/batch_create.html"
+    fields = []  # We'll handle fields manually
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['products'] = Item.objects.all()
+        return context
+
+    def post(self, request, *args, **kwargs):
+        try:
+            with transaction.atomic():
+                # Create Batch
+                batch = Batch.objects.create(
+                    name=request.POST.get('name'),
+                    product_id=request.POST.get('product'),
+                    manufacturing_date=request.POST.get('manufacturing_date'),
+                    expiration_date=request.POST.get('expiration_date'),
+                    quantity=int(request.POST.get('quantity')),
+                    remarks=request.POST.get('remarks', '')
+                )
+
+                # Update product quantity
+                product = batch.product
+                product.quantity += batch.quantity
+                product.save()
+
+                # Process raw materials (direct deduction)
+                raw_materials = json.loads(request.POST.get('raw_materials', '[]'))
+                for rm in raw_materials:
+                    raw_material = RawMaterial.objects.get(id=rm['id'])
+                    if raw_material.quantity < rm['quantity_used']:
+                        raise ValidationError(
+                            f"Not enough {raw_material.name} in stock. "
+                            f"Available: {raw_material.quantity}, Needed: {rm['quantity_used']}"
+                        )
+                    raw_material.quantity -= rm['quantity_used']
+                    raw_material.save()
+
+                messages.success(request, 'Batch created successfully')
+                return JsonResponse({'status': 'success'})
+        
+        except ValidationError as e:
+            return JsonResponse({'status': 'error', 'error': str(e)}, status=400)
+        except Exception as e:
+            logger.error(f"Error creating batch: {str(e)}")
+            return JsonResponse({'status': 'error', 'error': str(e)}, status=500)
+        
+class BatchDeleteView(LoginRequiredMixin, DeleteView):
+    model = Batch
+    template_name = "transactions/batch_confirm_delete.html"
+    success_url = reverse_lazy('batch-list')
+
+    def delete(self, request, *args, **kwargs):
+        try:
+            with transaction.atomic():
+                batch = self.get_object()
+                # Revert product quantity only
+                product = batch.product
+                product.quantity -= batch.quantity
+                product.save()
+                
+                # We can't restore raw materials because we don't have usage records
+                # Add warning message
+                messages.warning(request, 
+                    'Batch deleted but raw materials were not restored (no usage tracking)'
+                )
+                
+                return super().delete(request, *args, **kwargs)
+        except Exception as e:
+            messages.error(request, f'Error deleting batch: {str(e)}')
+            return redirect(self.success_url)

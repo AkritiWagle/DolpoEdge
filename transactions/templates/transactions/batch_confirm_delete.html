@@ -1,0 +1,23 @@
+{% extends "store/base.html" %}{% block title %}Confirm delete{% endblock %}
+{% block content %}
+<div class="container pt-5">
+    <form method="POST">
+        {% csrf_token %}
+        <fieldset class="form-group">
+            <legend class="border-bottom mb-4">Delete Batch</legend>
+            <h5>Are you sure you want to delete batch "{{ object.name }}"?</h5>
+            <p class="text-danger">
+                This will:
+                <ul>
+                    <li>Reduce product quantity by {{ object.quantity }} units</li>
+                    <li>NOT restore any raw materials (usage not tracked)</li>
+                </ul>
+            </p>
+        </fieldset>
+        <div class="form-group">
+            <button class="btn btn-outline-danger btn-sm" type="submit">Yes, Delete</button>
+            <a class="btn btn-outline-success btn-sm" href="{% url 'batch-list' %}">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock content %}

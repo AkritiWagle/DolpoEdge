@@ -111,7 +111,7 @@
                     <i class="fa fa-folder me-2"></i> Inventory Management
                 </a>
                 <ul class="dropdown-menu bg-dark border-0" aria-labelledby="productsDropdown">
-                    <li><a class="dropdown-item text-light {% if request.resolver_match.url_name == 'purchaseslist' %}active{% endif %}" href="{% url 'purchaseslist' %}">Add Products Stock</a></li>
+                    <li><a class="dropdown-item text-light {% if request.resolver_match.url_name == 'batch-list' %}active{% endif %}" href="{% url 'batch-list' %}">Add Products Stock</a></li>
                     <li><a class="dropdown-item text-light  {% if request.resolver_match.url_name == 'saleslist' %}active{% endif %} " href="{% url 'saleslist' %}">Add Sales</a></li>
                     <li><a class="dropdown-item text-light {% if request.resolver_match.url_name == '' %}active{% endif %}" href="{% url 'purchaseslist' %}">Add Raw Material Purchase</a></li>
                     <li><a class="dropdown-item text-light" href="{% url 'purchaseslist' %}">Add Other Purchase</a></li>

@@ -16,6 +16,7 @@ from .views import (
     SaleCreateView,
     SaleDeleteView,
     get_raw_materials,
+    BatchListView, BatchCreateView, BatchDeleteView,
 
     export_sales_to_excel,
     export_purchases_to_excel
@@ -50,6 +51,10 @@ urlpatterns = [
          name='sale-delete'
      ),
     path('new-purchase/', PurchaseCreateView, name='purchase-create'),
+
+    path('batches/', BatchListView.as_view(), name='batch-list'),
+    path('batches/create/', BatchCreateView.as_view(), name='batch-create'),
+    path('batches/<int:pk>/delete/', BatchDeleteView.as_view(), name='batch-delete'),
 
 
 
