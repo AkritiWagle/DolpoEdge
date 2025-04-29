@@ -156,13 +156,150 @@ document.addEventListener('DOMContentLoaded', function() {
     updateDateFields();
 });
 </script> -->
-<script>
+<!-- <script>
     document.addEventListener('DOMContentLoaded', function() {
         // Keep date fields always enabled
         const startDate = document.getElementById('id_start_date');
         const endDate = document.getElementById('id_end_date');
+        const form = document.getElementById('report-form');
         startDate.disabled = false;
         endDate.disabled = false;
+        
+        // errorDiv.className = 'alert alert-danger d-none mt-2';
+        // endDate.parentNode.parentNode.appendChild(errorDiv);
+
+        const reportType = document.getElementById('id_report_type');
+    const customerField = document.getElementById('id_customer');
+
+    function updateCustomerField() {
+        if (reportType.value === 'all' ) {
+            customerField.disabled = true;
+            customerField.value = '';
+            customerField.required = false;
+        } else {
+            customerField.disabled = false;
+            customerField.required = true;
+        }
+    }
+
+    // Initial update
+    updateCustomerField();
+    
+    function validateDates() {
+        const start = new Date(startDate.value);
+        const end = new Date(endDate.value);
+        errorDiv.classList.add('d-none');
+        
+        if (start && end && start > end) {
+            errorDiv.textContent = '⚠️ End date must be after start date';
+            errorDiv.classList.remove('d-none');
+            return false;
+        }
+        return true;
+    }
+
+    // Real-time validation
+    [startDate, endDate].forEach(field => {
+        field.addEventListener('change', validateDates);
     });
-    </script>
+
+    // Form submission handler
+    form.addEventListener('submit', function(e) {
+        if (!validateDates()) {
+            e.preventDefault();
+            endDate.focus();
+        }
+    });
+    
+    // Update on change
+    reportType.addEventListener('change', updateCustomerField);
+
+    });
+    </script> -->
+
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Common elements
+            const form = document.getElementById('report-form');
+            const reportType = document.getElementById('id_report_type');
+            
+            // Detect if we're dealing with customer or vendor
+            const customerField = document.getElementById('id_customer');
+            const vendorField = document.getElementById('id_vendor');
+            const targetField = customerField || vendorField;
+        
+            // Date validation elements
+            const startDate = document.getElementById('id_start_date');
+            const endDate = document.getElementById('id_end_date');
+            
+            // Create error message container
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'alert alert-danger d-none mt-2';
+            if (endDate) {
+                endDate.parentNode.parentNode.appendChild(errorDiv);
+            }
+        
+            function updateFieldState() {
+                if (reportType && targetField) {
+                    if (reportType.value === 'all') {
+                        targetField.disabled = true;
+                        targetField.value = '';
+                        targetField.required = false;
+                        targetField.classList.add('disabled-field');
+                    } else {
+                        targetField.disabled = false;
+                        targetField.required = true;
+                        targetField.classList.remove('disabled-field');
+                    }
+                }
+            }
+        
+            function validateDates() {
+                if (!startDate || !endDate) return true;
+                
+                const start = new Date(startDate.value);
+                const end = new Date(endDate.value);
+                errorDiv.classList.add('d-none');
+                
+                if (start && end && start > end) {
+                    errorDiv.textContent = '⚠️ End date must be after start date';
+                    errorDiv.classList.remove('d-none');
+                    return false;
+                }
+                return true;
+            }
+        
+            // Initialize field states
+            if (startDate && endDate) {
+                startDate.disabled = false;
+                endDate.disabled = false;
+                [startDate, endDate].forEach(field => {
+                    field.addEventListener('change', validateDates);
+                });
+            }
+        
+            if (reportType && targetField) {
+                updateFieldState();
+                reportType.addEventListener('change', updateFieldState);
+            }
+        
+            if (form) {
+                form.addEventListener('submit', function(e) {
+                    if (!validateDates()) {
+                        e.preventDefault();
+                        if (endDate) endDate.focus();
+                    }
+                });
+            }
+        });
+        </script>
+        
+        <style>
+        .disabled-field {
+            background-color: #e9ecef;
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+        </style>    
     {% endblock %}

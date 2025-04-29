@@ -48,6 +48,30 @@ class SalesReportForm(forms.ModelForm):
         self.fields['customer'].queryset = Customer.objects.all()
         self.fields['customer'].required = False
 
+        if self.initial.get('report_type') == 'all' or self.data.get('report_type') == 'all':
+            self.fields['customer'].disabled = True
+            self.fields['customer'].widget.attrs['disabled'] = True
+            self.fields['customer'].widget.attrs['data-previous-value'] = ''
+
+    def clean(self):
+        cleaned_data = super().clean()
+        report_type = cleaned_data.get('report_type')
+        customer = cleaned_data.get('customer')
+        start_date = cleaned_data.get('start_date')
+        end_date = cleaned_data.get('end_date')
+
+        if start_date and end_date:
+            if start_date > end_date:
+             self.add_error('end_date', "End date must be after start date")
+
+        if report_type == 'customer' and not customer:
+            raise ValidationError("Customer is required when selecting 'Single Customer' report type")
+            
+        if report_type == 'all' and customer:
+            cleaned_data['customer'] = None  # Force reset customer
+
+        return cleaned_data
+
 
 class PurchaseReportForm(forms.ModelForm):
     class Meta:
@@ -65,6 +89,17 @@ class PurchaseReportForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields['vendor'].queryset = Vendor.objects.all()
         self.fields['vendor'].required = False
+
+    def clean(self):
+        cleaned_data = super().clean()
+        start_date = cleaned_data.get('start_date')
+        end_date = cleaned_data.get('end_date')
+        
+        if start_date and end_date:
+            if start_date > end_date:
+                self.add_error('end_date', "End date must be after start date")
+                
+        return cleaned_data
 
 
 class PurchaseForm(forms.ModelForm):
