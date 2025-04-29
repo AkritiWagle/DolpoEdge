@@ -26,9 +26,9 @@ from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from openpyxl import Workbook
 
 # Local app imports
-from store.models import Item,RawMaterial, Batch
+from store.models import Item,RawMaterial, Batch,OperationsInventory
 from accounts.models import Customer, Vendor
-from .models import PurchaseDetailed, Sale, Purchase, SaleDetail
+from .models import PurchaseDetailed, Sale, Purchase, SaleDetail, OtherPurchase, OtherPurchaseDetailed
 from .forms import PurchaseForm
 
 
@@ -519,3 +519,89 @@ class BatchDeleteView(LoginRequiredMixin, DeleteView):
             logger.error(f"Batch deletion error: {str(e)}")
             messages.error(request, f'Error deleting batch: {str(e)}')
             return redirect(self.success_url)
+        
+class OtherPurchaseListView(LoginRequiredMixin, ListView):
+    model = OtherPurchase
+    template_name = "transactions/other_purchase_list.html"
+    context_object_name = "purchases"
+    paginate_by = 10
+    ordering = ['-date']
+
+class OtherPurchaseCreateView(LoginRequiredMixin, CreateView):
+    model = OtherPurchase
+    template_name = "transactions/other_purchase_create.html"
+    fields = []  # Explicitly declare empty fields since we're using custom form handling
+
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['operations_items'] = OperationsInventory.objects.all()
+        return context
+
+    def post(self, request, *args, **kwargs):
+        try:
+            with transaction.atomic():
+                data = json.loads(request.body)
+                
+                # Create OtherPurchase
+                purchase = OtherPurchase.objects.create(
+                    source=data['source'],
+                    date=data['date'],
+                    remarks=data.get('remarks', ''),
+                    sub_total=Decimal(data['sub_total']),
+                    grand_total=Decimal(data['grand_total']),
+                    description=f"Other purchase from {data['source']}"
+                )
+
+                # Create OtherPurchaseDetailed entries
+                for item in data['items']:
+                    ops_item = OperationsInventory.objects.get(id=item['id'])
+                    OtherPurchaseDetailed.objects.create(
+                        other_purchase_id=purchase,
+                        type=item['type'],
+                        unit_of_measure=ops_item.unit_of_measure,
+                        unit_price=Decimal(item['unit_price']),
+                        quantity=item['quantity'],
+                        total_price=Decimal(item['total'])
+                    )
+                    # Update inventory
+                    ops_item.quantity += item['quantity']
+                    ops_item.save()
+
+                return JsonResponse({'status': 'success'})
+        
+        except Exception as e:
+            logger.error(f"Other purchase error: {str(e)}")
+            return JsonResponse({'status': 'error', 'error': str(e)}, status=400)
+
+class OtherPurchaseDeleteView(LoginRequiredMixin, DeleteView):
+    model = OtherPurchase
+    template_name = "transactions/other_purchase_confirm_delete.html"
+    success_url = reverse_lazy('other-purchases-list')
+
+    def delete(self, request, *args, **kwargs):
+        try:
+            with transaction.atomic():
+                purchase = self.get_object()
+                # Restore inventory quantities
+                for detail in purchase.details.all():
+                    ops_item = OperationsInventory.objects.get(id=detail.raw_material.id)
+                    ops_item.quantity -= detail.quantity
+                    ops_item.save()
+                return super().delete(request, *args, **kwargs)
+        except Exception as e:
+            messages.error(request, f'Error deleting purchase: {str(e)}')
+            return redirect(self.success_url)
+
+def get_operations_inventory(request):
+    search = request.GET.get('q', '')
+    items = OperationsInventory.objects.filter(name__icontains=search)[:10]
+    results = [{
+        'id': i.id,
+        'text': i.name,
+        'uom': i.unit_of_measure,
+        'type': i.get_type_display(),
+        'unit_price': float(i.unit_price),
+        'stock': i.quantity
+    } for i in items]
+    return JsonResponse(results, safe=False)

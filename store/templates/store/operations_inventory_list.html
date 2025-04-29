@@ -1,0 +1,117 @@
+{% extends "store/base.html" %}
+{% load static %}
+{% load render_table from django_tables2 %}
+{% load querystring from django_tables2 %}
+{% block title %}Office Inventory{% endblock title %}
+{% block content %}
+<div class="container">
+    <!-- Header Section -->
+    <div class="container my-4">
+        <div class="card shadow-sm rounded p-3">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <h4 class="display-6 mb-0 text-success">Office Inventory</h4>
+                </div>
+                <div class="col-md-6 d-flex justify-content-end gap-2">
+                    <a class="btn btn-success btn-sm rounded-pill shadow-sm" href="{% url 'operations-inventory-create' %}">
+                        <i class="fa-solid fa-plus"></i> Add Item
+                    </a>
+                    <a class="btn btn-success btn-sm rounded-pill shadow-sm" href="{% querystring '_export'='xlsx' %}">
+                        <i class="fa-solid fa-download"></i> Export
+                    </a>
+                </div>
+            </div>
+            <form class="input-group mt-4" role="search" id="searchform" action="{% url 'operations-inventory-list' %}" method="get">
+                <input id="searchbox" name="q" type="text" class="form-control border-0 rounded-pill shadow-sm" placeholder="Search inventory">
+                <button class="btn btn-outline-success rounded-pill shadow-sm" type="submit">
+                    <i class="fa-solid fa-search"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div class="px-4">
+        <table class="table table-bordered table-striped table-hover table-sm">
+            <thead class="thead-light">
+                <tr>
+                    <th scope="col">ID</th>
+                    <th scope="col">Name</th>
+                    <th scope="col">Type</th>
+                    <th scope="col">Quantity</th>
+                    <th scope="col">Unit</th>
+                    <th scope="col">Unit Price</th>
+                    <th scope="col">Vendor</th>
+                    <th scope="col">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in operations_inventory %}
+                <tr>
+                    <th scope="row">{{ item.id }}</th>
+                    <td>{{ item.name }}</td>
+                    <td>{{ item.get_type_display }}</td>
+                    <td>{{ item.quantity }}</td>
+                    <td>{{ item.unit_of_measure }}</td>
+                    <td>{{ item.unit_price }}</td>
+                    <td>{{ item.vendor.name|default:"-" }}</td>
+                    <td>
+                        <div class="d-flex justify-content-evenly gap-2">
+                            <a class="btn btn-outline-info btn-sm" href="{% url 'operations-inventory-update' item.id %}">
+                                <i class="fa-solid fa-pen"></i> Edit
+                            </a>
+                            <a class="btn btn-outline-danger btn-sm" href="{% url 'operations-inventory-delete' item.id %}">
+                                <i class="fa-solid fa-trash"></i> Delete
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if is_paginated %}
+    <nav aria-label="Page navigation">
+        <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.previous_page_number }}" aria-label="Previous">
+                    <span aria-hidden="true">&laquo;</span>
+                </a>
+            </li>
+            {% else %}
+            <li class="page-item disabled">
+                <span class="page-link" aria-label="Previous">
+                    <span aria-hidden="true">&laquo;</span>
+                </span>
+            </li>
+            {% endif %}
+            {% for i in paginator.page_range %}
+            {% if page_obj.number == i %}
+            <li class="page-item active" aria-current="page">
+                <span class="page-link">{{ i }} <span class="visually-hidden">(current)</span></span>
+            </li>
+            {% else %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ i }}">{{ i }}</a>
+            </li>
+            {% endif %}
+            {% endfor %}
+            {% if page_obj.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.next_page_number }}" aria-label="Next">
+                    <span aria-hidden="true">&raquo;</span>
+                </a>
+            </li>
+            {% else %}
+            <li class="page-item disabled">
+                <span class="page-link" aria-label="Next">
+                    <span aria-hidden="true">&raquo;</span>
+                </span>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+{% endblock content %}

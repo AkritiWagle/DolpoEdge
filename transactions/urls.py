@@ -6,6 +6,9 @@ from django.conf.urls.static import static
 
 # Local app imports
 from .views import (
+    OtherPurchaseCreateView,
+    OtherPurchaseDeleteView,
+    OtherPurchaseListView,
     PurchaseListView,
     PurchaseDetailView,
     PurchaseCreateView,
@@ -17,6 +20,7 @@ from .views import (
     SaleDeleteView,
     get_raw_materials,
     BatchListView, BatchCreateView, BatchDeleteView,
+    get_operations_inventory,
 
     export_sales_to_excel,
     export_purchases_to_excel
@@ -55,6 +59,12 @@ urlpatterns = [
     path('batches/', BatchListView.as_view(), name='batch-list'),
     path('batches/create/', BatchCreateView.as_view(), name='batch-create'),
     path('batches/<int:pk>/delete/', BatchDeleteView.as_view(), name='batch-delete'),
+
+    path('other-purchases/', OtherPurchaseListView.as_view(), name='other-purchases-list'),
+    path('other-purchases/create/', OtherPurchaseCreateView.as_view(), name='other-purchase-create'),
+    path('other-purchases/<int:pk>/delete/', OtherPurchaseDeleteView.as_view(), name='other-purchase-delete'),
+    path('get-operations-inventory/', get_operations_inventory, name='get_operations_inventory'),
+
 
 
 

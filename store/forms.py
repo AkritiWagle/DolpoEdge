@@ -1,5 +1,5 @@
 from django import forms
-from .models import Item, Category, Delivery, RawMaterial, Vendor
+from .models import Item, Category, Delivery, RawMaterial, Vendor, OperationsInventory
 
 
 class ItemForm(forms.ModelForm):
@@ -109,6 +109,24 @@ class RawMaterialForm(forms.ModelForm):
             'remarks': forms.Textarea(attrs={'rows': 3, 'class': 'form-control'}),
         }
 
+
+class OperationsInventoryForm(forms.ModelForm):
+    class Meta:
+        model = OperationsInventory
+        fields = [
+            'name', 
+            'type',
+            'description',
+            'unit_of_measure',
+            'quantity',
+            'unit_price',
+            'vendor',
+            'remarks'
+        ]
+        widgets = {
+            'description': forms.Textarea(attrs={'rows': 3}),
+            'remarks': forms.Textarea(attrs={'rows': 2}),
+        }
 # class RawMaterialForm(forms.ModelForm):
 #     class Meta:
 #         model = RawMaterial

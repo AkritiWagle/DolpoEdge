@@ -43,8 +43,8 @@ from django_tables2.export.views import ExportMixin
 # Local app imports
 from accounts.models import Profile, Vendor
 from transactions.models import Sale
-from .models import Category, Item, Delivery, RawMaterial
-from .forms import ItemForm, CategoryForm, DeliveryForm, RawMaterialForm
+from .models import Category, Item, Delivery, RawMaterial, OperationsInventory
+from .forms import ItemForm, CategoryForm, DeliveryForm, RawMaterialForm, OperationsInventoryForm
 from .tables import ItemTable
 
 
@@ -458,7 +458,42 @@ class RawMaterialSearchView(ListView):
         context = super().get_context_data(**kwargs)
         context['search_query'] = self.request.GET.get('q', '')
         return context
-    
+
+
+class OperationsInventoryListView(LoginRequiredMixin, ListView):
+    model = OperationsInventory
+    template_name = 'store/operations_inventory_list.html'
+    context_object_name = 'operations_inventory'
+    paginate_by = 10
+
+    def get_queryset(self):
+        search_query = self.request.GET.get('q', '')
+        queryset = super().get_queryset()
+        if search_query:
+            queryset = queryset.filter(
+                Q(name__icontains=search_query) |
+                Q(description__icontains=search_query)
+            )
+        return queryset.order_by('-created_at')
+
+class OperationsInventoryCreateView(LoginRequiredMixin, CreateView):
+    model = OperationsInventory
+    form_class = OperationsInventoryForm
+    template_name = 'store/operations_inventory_form.html'
+    success_url = reverse_lazy('operations-inventory-list')
+
+class OperationsInventoryUpdateView(LoginRequiredMixin, UpdateView):
+    model = OperationsInventory
+    form_class = OperationsInventoryForm
+    template_name = 'store/operations_inventory_form.html'
+    success_url = reverse_lazy('operations-inventory-list')
+
+class OperationsInventoryDeleteView(LoginRequiredMixin, DeleteView):
+    model = OperationsInventory
+    template_name = 'store/operations_inventory_confirm_delete.html'
+    success_url = reverse_lazy('operations-inventory-list')
+
+
 def product_qr_code(request, slug):
     # Retrieve the product details
     product = get_object_or_404(Item, slug=slug)

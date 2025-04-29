@@ -1,0 +1,91 @@
+{% extends "store/base.html" %}
+{% load static %}
+
+{% block title %}
+    {% if object %}Update{% else %}Add{% endif %} Office Item
+{% endblock title %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8 col-md-10">
+            <div class="card shadow-sm border-light">
+                <div class="card-body">
+                    <h1 class="text-center mb-4">
+                        {% if object %}Update{% else %}Add{% endif %} Office Item
+                    </h1>
+                    <form method="POST" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.name.id_for_label }}" class="form-label">
+                                    Item Name
+                                </label>
+                                {{ form.name }}
+                                <div class="text-danger">{{ form.name.errors }}</div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.type.id_for_label }}" class="form-label">
+                                    Type
+                                </label>
+                                {{ form.type }}
+                                <div class="text-danger">{{ form.type.errors }}</div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.unit_of_measure.id_for_label }}" class="form-label">
+                                    Unit of Measure
+                                </label>
+                                {{ form.unit_of_measure }}
+                                <div class="text-danger">{{ form.unit_of_measure.errors }}</div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.unit_price.id_for_label }}" class="form-label">
+                                    Unit Price
+                                </label>
+                                {{ form.unit_price }}
+                                <div class="text-danger">{{ form.unit_price.errors }}</div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.quantity.id_for_label }}" class="form-label">
+                                    Quantity
+                                </label>
+                                {{ form.quantity }}
+                                <div class="text-danger">{{ form.quantity.errors }}</div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.vendor.id_for_label }}" class="form-label">
+                                    Vendor
+                                </label>
+                                {{ form.vendor }}
+                                <div class="text-danger">{{ form.vendor.errors }}</div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-12 mb-3">
+                                <label for="{{ form.description.id_for_label }}" class="form-label">
+                                    Description
+                                </label>
+                                {{ form.description }}
+                                <div class="text-danger">{{ form.description.errors }}</div>
+                            </div>
+                        </div>
+
+                        <div class="form-group text-center">
+                            <button class="btn btn-success btn-lg" type="submit">
+                                <i class="fas fa-check"></i> {% if object %}Update{% else %}Submit{% endif %}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}

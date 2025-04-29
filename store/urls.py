@@ -142,6 +142,11 @@ urlpatterns = [
     path('raw-material/<int:pk>/update/', RawMaterialUpdateView.as_view(), name='raw-material-update'),
     path('raw-material/<int:pk>/delete/', RawMaterialDeleteView.as_view(), name='raw-material-delete'),
     path('raw-materials/', RawMaterialSearchView.as_view(), name='raw-material-list'),
+    
+    path('operations-inventory/', views.OperationsInventoryListView.as_view(), name='operations-inventory-list'),
+    path('operations-inventory/create/', views.OperationsInventoryCreateView.as_view(), name='operations-inventory-create'),
+    path('operations-inventory/<int:pk>/update/', views.OperationsInventoryUpdateView.as_view(), name='operations-inventory-update'),
+    path('operations-inventory/<int:pk>/delete/', views.OperationsInventoryDeleteView.as_view(), name='operations-inventory-delete'),
 
 
     
