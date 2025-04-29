@@ -1,0 +1,35 @@
+{% extends "store/base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="card border-danger">
+        <div class="card-header bg-danger text-white">
+            <h4 class="mb-0">
+                <i class="fas fa-trash-alt me-2"></i>Delete Purchase
+            </h4>
+        </div>
+        <div class="card-body">
+            <p class="lead">Are you sure you want to delete this purchase?</p>
+            <div class="alert alert-warning">
+                <strong>Details:</strong><br>
+                Source: {{ object.source }}<br>
+                Date: {{ object.date }}<br>
+                Total Amount: ₹{{ object.grand_total }}
+            </div>
+            
+            <form method="post">
+                {% csrf_token %}
+                <div class="mt-4">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-check me-2"></i>Yes, Delete
+                    </button>
+                    <a href="{% url 'other-purchases-list' %}" class="btn btn-secondary">
+                        <i class="fas fa-times me-2"></i>Cancel
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

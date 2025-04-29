@@ -535,7 +535,11 @@ class OtherPurchaseCreateView(LoginRequiredMixin, CreateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['operations_items'] = OperationsInventory.objects.all()
+        # Get existing vendor names + previous sources
+        vendors = Vendor.objects.values_list('name', flat=True).distinct()
+        existing_sources = OtherPurchase.objects.exclude(source__isnull=True)\
+                                                 .values_list('source', flat=True).distinct()
+        context['vendor_sources'] = list(vendors) + list(existing_sources)
         return context
 
     def post(self, request, *args, **kwargs):

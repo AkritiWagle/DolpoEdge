@@ -58,7 +58,16 @@
                         {% csrf_token %}
                         <div class="mb-3">
                             <label class="form-label">Source</label>
-                            <input type="text" class="form-control" name="source" required>
+                            <input type="text" 
+                                   class="form-control" 
+                                   name="source" 
+                                   list="vendorSources"
+                                   required>
+                            <datalist id="vendorSources">
+                                {% for vendor in vendor_sources %}
+                                    <option value="{{ vendor }}">
+                                {% endfor %}
+                            </datalist>
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Purchase Date</label>
