@@ -158,8 +158,8 @@
                     <i class="fa fa-users me-2"></i> Reports
                 </a>
                 <ul class="dropdown-menu bg-dark border-0" aria-labelledby="accountsDropdown">
-                    <li><a class="dropdown-item text-light {% if request.resolver_match.url_name == 'bill_list' %}active{% endif %}" href="{% url 'bill_list' %}">Purchase Report</a></li>
-                    <li><a class="dropdown-item text-light {% if request.resolver_match.url_name == 'invoicelist' %}active{% endif %}" href="{% url 'invoicelist' %}">Sales Report</a></li>
+                    <li><a class="dropdown-item text-light {% if request.resolver_match.url_name == 'purchase-reports-list' %}active{% endif %}" href="{% url 'purchase-reports-list' %}">Purchase Report</a></li>
+                    <li><a class="dropdown-item text-light {% if request.resolver_match.url_name == 'sales-reports-list' %}active{% endif %}" href="{% url 'sales-reports-list' %}">Sales Report</a></li>
                     <li><a class="dropdown-item text-light {% if request.resolver_match.url_name == '' %}active{% endif %}" href="{% url 'bill_list' %}">Tax Report</a></li>
                 </ul>
             </li>

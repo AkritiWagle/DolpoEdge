@@ -1,0 +1,37 @@
+{% extends "store/base.html" %}{% load static %}{% load render_table from django_tables2 %}{% load querystring from django_tables2 %}{% block title %}Purchases{%endblock title%}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Report Results</h2>
+    <div class="mb-3">
+        <a href="{% url 'report-export' %}" class="btn btn-success">
+            Export to Excel
+        </a>
+    </div>
+    
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                {% for header in headers %}
+                <th>{{ header }}</th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in data %}
+            <tr>
+                <td>{{ item.date }}</td>
+                {% if report_type == 'sales' %}
+                <td>{{ item.customer }}</td>
+                <td>{{ item.grand_total }}</td>
+                {% else %}
+                <td>{{ item.vendor }}</td>
+                <td>{{ item.purchase_type }}</td>
+                <td>{{ item.total }}</td>
+                {% endif %}
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

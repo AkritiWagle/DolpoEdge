@@ -1,8 +1,10 @@
 from django import forms
+from django.core.exceptions import ValidationError
+from datetime import date, timedelta
 
-from accounts.models import Vendor
+from accounts.models import Vendor, Customer
 from store.models import RawMaterial
-from .models import Purchase, PurchaseDetailed
+from .models import Purchase, PurchaseDetailed, SalesReport, PurchaseReport
 
 
 class BootstrapMixin(forms.ModelForm):
@@ -13,6 +15,56 @@ class BootstrapMixin(forms.ModelForm):
         super().__init__(*args, **kwargs)
         for field in self.fields.values():
             field.widget.attrs.setdefault('class', 'form-control')
+
+class BaseReportForm(forms.Form):
+    TIME_FRAMES = [
+        ('custom', 'Custom Dates'),
+        ('daily', 'Daily'),
+        ('weekly', 'Weekly'),
+        ('biweekly', 'Biweekly'),
+        ('monthly', 'Monthly'),
+        ('quarterly', 'Quarterly'),
+        ('yearly', 'Yearly'),
+    ]
+    
+    time_frame = forms.ChoiceField(choices=TIME_FRAMES)
+    start_date = forms.DateField(widget=forms.DateInput(attrs={'type': 'date'}), required=False)
+    end_date = forms.DateField(widget=forms.DateInput(attrs={'type': 'date'}), required=False)
+
+class SalesReportForm(forms.ModelForm):
+    class Meta:
+        model = SalesReport
+        fields = ['name', 'report_type', 'time_frame', 'start_date', 'end_date', 'customer']
+        widgets = {
+            'time_frame': forms.HiddenInput(),  # Add this
+
+            'start_date': forms.DateInput(attrs={'type': 'date'}),
+            'end_date': forms.DateInput(attrs={'type': 'date'}),
+            'customer': forms.Select(attrs={'class': 'select2'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['customer'].queryset = Customer.objects.all()
+        self.fields['customer'].required = False
+
+
+class PurchaseReportForm(forms.ModelForm):
+    class Meta:
+        model = PurchaseReport
+        fields = ['name', 'report_type', 'purchase_type', 'time_frame', 'start_date', 'end_date', 'vendor']
+        widgets = {
+            'time_frame': forms.HiddenInput(),  # Add this
+
+            'start_date': forms.DateInput(attrs={'type': 'date'}),
+            'end_date': forms.DateInput(attrs={'type': 'date'}),
+            'vendor': forms.Select(attrs={'class': 'select2'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['vendor'].queryset = Vendor.objects.all()
+        self.fields['vendor'].required = False
 
 
 class PurchaseForm(forms.ModelForm):

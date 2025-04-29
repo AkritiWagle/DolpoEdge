@@ -2,19 +2,25 @@
 from decimal import Decimal
 import json
 import logging
+import os
+
 
 # Django core imports
 from django.http import JsonResponse, HttpResponse
 from django.urls import reverse, reverse_lazy
-from django.shortcuts import redirect, render
+from django.shortcuts import get_object_or_404, redirect, render
 from django.db import transaction
+from django.db.models import Q
 from django.contrib import messages
 from django.core.exceptions import ValidationError
+
+from django.utils import timezone
+from datetime import timedelta
 
 
 
 # Class-based views
-from django.views.generic import DetailView, ListView, CreateView
+from django.views.generic import DetailView, ListView, CreateView, DeleteView, FormView
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.views.decorators.http import require_http_methods
 
@@ -28,8 +34,8 @@ from openpyxl import Workbook
 # Local app imports
 from store.models import Item,RawMaterial, Batch,OperationsInventory
 from accounts.models import Customer, Vendor
-from .models import PurchaseDetailed, Sale, Purchase, SaleDetail, OtherPurchase, OtherPurchaseDetailed
-from .forms import PurchaseForm
+from .models import PurchaseDetailed, Sale, Purchase, SaleDetail, OtherPurchase, OtherPurchaseDetailed, SalesReport, PurchaseReport
+from .forms import PurchaseForm, SalesReportForm, PurchaseReportForm
 
 
 logger = logging.getLogger(__name__)
@@ -609,3 +615,180 @@ def get_operations_inventory(request):
         'stock': i.quantity
     } for i in items]
     return JsonResponse(results, safe=False)
+
+
+class ReportBaseView(LoginRequiredMixin, FormView):
+    template_name = 'transactions/report_form.html'
+    success_url = reverse_lazy('report-results')
+    
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['initial'] = {
+            'time_frame': 'monthly',
+            'start_date': timezone.now().replace(day=1),
+            'end_date': timezone.now()
+        }
+        return kwargs
+
+    def form_valid(self, form):
+        # Store form data in session
+        self.request.session['report_data'] = {
+            'form_data': form.cleaned_data,
+            'report_type': self.report_type
+        }
+        return super().form_valid(form)
+
+class ReportMixin:
+    def get_timeframe_dates(self, time_frame):
+        today = timezone.now().date()
+        if time_frame == 'daily':
+            return today, today
+        elif time_frame == 'weekly':
+            return today - timedelta(days=7), today
+        elif time_frame == 'biweekly':
+            return today - timedelta(days=14), today
+        elif time_frame == 'monthly':
+            return today.replace(day=1), today
+        elif time_frame == 'quarterly':
+            quarter = (today.month - 1) // 3 + 1
+            start_month = 3 * quarter - 2
+            return today.replace(month=start_month, day=1), today
+        elif time_frame == 'yearly':
+            return today.replace(month=1, day=1), today
+        return None, None
+
+class SalesReportView(LoginRequiredMixin, ReportMixin, CreateView):
+    model = SalesReport
+    form_class = SalesReportForm
+    template_name = 'transactions/report_form.html'
+    success_url = reverse_lazy('sales-reports-list')  # Unique success URL
+
+
+    
+    def get_success_url(self):
+        return reverse('report-export', kwargs={'pk': self.object.pk, 'type': 'sales'})
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['report_type'] = 'sales'
+        return context
+    def form_valid(self, form):
+        # Use form.cleaned_data instead of direct POST data
+        report = form.save(commit=False)
+        report.created_by = self.request.user
+        report.save()
+        return super().form_valid(form)
+
+class PurchaseReportView(LoginRequiredMixin, ReportMixin, CreateView):
+    model = PurchaseReport
+    form_class = PurchaseReportForm
+    template_name = 'transactions/report_form.html'
+    success_url = reverse_lazy('purchase-reports-list')  # Unique success URL
+
+
+    def form_valid(self, form):
+        form.instance.created_by = self.request.user
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse('report-export', kwargs={'pk': self.object.pk, 'type': 'purchase'})
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['report_type'] = 'purchase'
+        return context
+
+class ReportListView(LoginRequiredMixin, ListView):
+    template_name = 'transactions/report_list.html'
+    
+    def get_queryset(self):
+        if self.report_type == 'sales':
+            return SalesReport.objects.filter(created_by=self.request.user)
+        return PurchaseReport.objects.filter(created_by=self.request.user)
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['report_type'] = self.report_type
+        return context
+
+class SalesReportListView(ReportListView):
+    report_type = 'sales'
+    model = SalesReport
+    template_name = 'transactions/sales_report_list.html'
+
+
+class PurchaseReportListView(ReportListView):
+    report_type = 'purchase'
+    model = PurchaseReport
+    template_name = 'transactions/purchase_report_list.html'
+
+
+class ReportDeleteView(LoginRequiredMixin, DeleteView):
+    def get_success_url(self):
+        return reverse(f'{self.report_type}-reports-list')
+    
+    def get_queryset(self):
+        if self.report_type == 'sales':
+            return SalesReport.objects.filter(created_by=self.request.user)
+        return PurchaseReport.objects.filter(created_by=self.request.user)
+
+class SalesReportDeleteView(ReportDeleteView):
+    report_type = 'sales'
+    model = SalesReport
+
+class PurchaseReportDeleteView(ReportDeleteView):
+    report_type = 'purchase'
+    model = PurchaseReport
+
+def export_report(request, pk, type):
+    # Get report object
+    if type == 'sales':
+        report = get_object_or_404(SalesReport, pk=pk)
+        qs = Sale.objects.filter(
+            date_added__date__range=[report.start_date, report.end_date]
+        )
+        if report.report_type == 'customer' and report.customer:
+            qs = qs.filter(customer=report.customer)
+    else:
+        report = get_object_or_404(PurchaseReport, pk=pk)
+        qs = Purchase.objects.filter(
+            date__range=[report.start_date, report.end_date]
+        )
+        if report.purchase_type != 'all':
+            qs = qs.filter(purchase_type=report.purchase_type)
+        if report.report_type == 'vendor' and report.vendor:
+            qs = qs.filter(vendor=report.vendor)
+
+    # Create Excel workbook
+    wb = Workbook()
+    ws = wb.active
+    ws.title = f"{type.capitalize()} Report"
+    
+    # Add headers
+    if type == 'sales':
+        headers = ['Date', 'Customer', 'Total Sales', 'Tax', 'Net Total']
+        for col_num, header in enumerate(headers, 1):
+            ws.cell(row=1, column=col_num, value=header)
+        
+        for row_num, sale in enumerate(qs, 2):
+            ws.cell(row=row_num, column=1, value=sale.date_added.date())
+            ws.cell(row=row_num, column=2, value=str(sale.customer))
+            ws.cell(row=row_num, column=3, value=float(sale.sub_total))
+            ws.cell(row=row_num, column=4, value=float(sale.tax_amount))
+            ws.cell(row=row_num, column=5, value=float(sale.grand_total))
+    else:
+        headers = ['Date', 'Vendor', 'Type', 'Total Amount']
+        for col_num, header in enumerate(headers, 1):
+            ws.cell(row=1, column=col_num, value=header)
+        
+        for row_num, purchase in enumerate(qs, 2):
+            ws.cell(row=row_num, column=1, value=purchase.date)
+            ws.cell(row=row_num, column=2, value=str(purchase.vendor))
+            ws.cell(row=row_num, column=3, value=purchase.get_purchase_type_display())
+            ws.cell(row=row_num, column=4, value=float(purchase.grand_total))
+
+    # Create response
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    filename = f"{type}_report_{report.start_date}_to_{report.end_date}.xlsx"
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    wb.save(response)
+    return response

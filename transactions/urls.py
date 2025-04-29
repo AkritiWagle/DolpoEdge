@@ -12,13 +12,20 @@ from .views import (
     PurchaseListView,
     PurchaseDetailView,
     PurchaseCreateView,
+    PurchaseReportDeleteView,
+    PurchaseReportListView,
+    PurchaseReportView,
     PurchaseUpdateView,
     PurchaseDeleteView,
     SaleListView,
     SaleDetailView,
     SaleCreateView,
     SaleDeleteView,
-    get_raw_materials,
+    SalesReportDeleteView,
+    SalesReportListView,
+    SalesReportView,
+    export_report,
+    get_raw_materials,      
     BatchListView, BatchCreateView, BatchDeleteView,
     get_operations_inventory,
 
@@ -72,6 +79,19 @@ urlpatterns = [
     path('sales/export/', export_sales_to_excel, name='sales-export'),
     path('purchases/export/', export_purchases_to_excel,
          name='purchases-export'),
+
+    # Sales Reports
+    path('reports/sales/', SalesReportView.as_view(), name='create-sales-report'),
+    path('reports/sales/list/', SalesReportListView.as_view(), name='sales-reports-list'),
+    path('reports/sales/<int:pk>/delete/', SalesReportDeleteView.as_view(), name='delete-sales-report'),
+    
+    # Purchase Reports
+    path('reports/purchases/', PurchaseReportView.as_view(), name='create-purchase-report'),
+    path('reports/purchases/list/', PurchaseReportListView.as_view(), name='purchase-reports-list'),
+    path('reports/purchases/<int:pk>/delete/', PurchaseReportDeleteView.as_view(), name='delete-purchase-report'),
+    
+    # Export
+    path('reports/export/<str:type>/<int:pk>/', export_report, name='report-export'),
 ]
 
 # Static media files configuration for development

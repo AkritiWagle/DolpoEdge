@@ -163,7 +163,7 @@ class Purchase(models.Model):
         ]
         self.description = ", ".join(items)
         self.save(update_fields=['description'])
-        
+
     class Meta:
         db_table = 'purchase'
         ordering = ['date']
@@ -433,3 +433,99 @@ class OfferDiscountDetailed(models.Model):
             models.Index(fields=['type']),
             models.Index(fields=['offer_id', 'discount_id']),
         ]
+
+# Add to transactions/models.py
+class SalesReport(models.Model):
+    REPORT_TYPE_CHOICES = [
+        ('all', 'All Sales'),
+        ('customer', 'Single Customer'),
+    ]
+    TIME_FRAME_CHOICES = [
+        ('custom', 'Custom'),
+        ('daily', 'Daily'),
+        ('weekly', 'Weekly'),
+        ('biweekly', 'Biweekly'),
+        ('monthly', 'Monthly'),
+        ('quarterly', 'Quarterly'),
+        ('yearly', 'Yearly'),
+    ]
+    
+    name = models.CharField(max_length=255)
+    report_type = models.CharField(max_length=10, choices=REPORT_TYPE_CHOICES)
+    # time_frame = models.CharField(max_length=10, choices=TIME_FRAME_CHOICES)
+    # For both SalesReport and PurchaseReport models
+    time_frame = models.CharField(
+        max_length=10, 
+        choices=TIME_FRAME_CHOICES, 
+        default='custom'  # Add default 
+    )
+    start_date = models.DateField()
+    end_date = models.DateField()
+    customer = models.ForeignKey(
+        'accounts.Customer', 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True
+    )
+    created_by = models.ForeignKey(
+        'auth.User',
+        on_delete=models.CASCADE
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    modified_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.name} - {self.get_report_type_display()}"
+
+class PurchaseReport(models.Model):
+    REPORT_TYPE_CHOICES = [
+        ('all', 'All Purchases'),
+        ('vendor', 'Single Vendor'),
+    ]
+    PURCHASE_TYPE_CHOICES = [
+        ('raw', 'Raw Material'),
+        ('other', 'Other Purchases'),
+        ('all', 'All Types'),
+    ]
+    TIME_FRAME_CHOICES = [
+        ('custom', 'Custom'),
+        ('daily', 'Daily'),
+        ('weekly', 'Weekly'),
+        ('biweekly', 'Biweekly'),
+        ('monthly', 'Monthly'),
+        ('quarterly', 'Quarterly'),
+        ('yearly', 'Yearly'),
+    ]
+    
+    name = models.CharField(max_length=255)
+    report_type = models.CharField(max_length=10, choices=REPORT_TYPE_CHOICES)
+    purchase_type = models.CharField(max_length=10, choices=PURCHASE_TYPE_CHOICES)
+    # time_frame = models.CharField(max_length=10, choices=TIME_FRAME_CHOICES)
+    time_frame = models.CharField(
+        max_length=10, 
+        choices=TIME_FRAME_CHOICES, 
+        default='custom'  # Add default 
+    )
+    start_date = models.DateField()
+    end_date = models.DateField()
+    vendor = models.ForeignKey(
+        'accounts.Vendor',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True
+    )
+    created_by = models.ForeignKey(
+        'auth.User',
+        on_delete=models.CASCADE
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    modified_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.name} - {self.get_report_type_display()}"
