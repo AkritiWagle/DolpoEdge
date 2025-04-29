@@ -1,15 +1,35 @@
 {% extends 'store/base.html' %}
+{% load static %}
+
 {% block content %}
-  <div class="container mt-5">
-    <h1 class="mb-4">Are you sure you want to delete "{{ object }}"?</h1>
-    <form method="post" class="mb-3">
-      {% csrf_token %}
-      <button type="submit" class="btn btn-danger">
-        <i class="fas fa-trash-alt"></i> Confirm
-      </button>
-      <a href="{% url 'customer_list' %}" class="btn btn-secondary">
-        <i class="fas fa-times"></i> Cancel
-      </a>
-    </form>
-  </div>
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-6 col-md-8">
+            <div class="card shadow-sm border-danger">
+                <div class="card-body text-center">
+                    <h2 class="text-danger mb-4">
+                        <i class="fas fa-exclamation-triangle"></i> Delete Customer
+                    </h2>
+                    <p class="lead">Are you sure you want to permanently delete this customer?</p>
+                    <div class="mb-4">
+                        <p class="h5">{{ object.name }}</p>
+                        <p class="text-muted">Customer ID: {{ object.id }}</p>
+                    </div>
+
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="d-flex justify-content-center gap-3 mt-4">
+                            <button type="submit" class="btn btn-danger btn-lg">
+                                <i class="fas fa-trash"></i> Confirm Delete
+                            </button>
+                            <a href="{% url 'customer_list' %}" class="btn btn-secondary btn-lg">
+                                <i class="fas fa-times"></i> Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
