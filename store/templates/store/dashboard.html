@@ -21,14 +21,14 @@
                             text-decoration: none;
                         }
                     </style>
-                    <div class="col-xl-4 col-sm-6 col-12" id="products">
-                        <a href="{% url 'productslist' %}">
-                            <div class="card shadow border-0">
-                                <div class="card-body">
-                                    <div class="row">
+                    <!-- <div class="col-xl-4 col-sm-6 col-12" id="products"> -->
+                        <!-- <a href="{% url 'productslist' %}"> -->
+                            <!-- <div class="card shadow border-0"> -->
+                                <!-- <div class="card-body"> -->
+                                    <!-- <div class="row">
                                         <div class="col">
                                             <span class="h6 font-semibold text-muted text-sm d-block mb-2">Top Stock</span>
-                                            <!-- <span class="h3 font-bold mb-0">{{ total_items }}</span> -->
+                                             <span class="h3 font-bold mb-0">{{ total_items }}</span> 
                                             <span class="h3 font-bold mb-0">{{ 3 }}</span>
                                         </div>
                                         <div class="col-auto">
@@ -36,18 +36,18 @@
                                                 <i class="fa fa-clipboard-list"></i>
                                             </div>
                                         </div>
-                                    </div>
+                                    </div> -->
                                     <!-- <div class="mt-2 mb-0 text-sm">
                                         <span class="badge badge-pill bg-soft-success text-success me-2">
                                             <i class="fa fa-arrow-up me-1"></i>13%
                                         </span>
                                         <span class="text-nowrap text-xs text-muted">Since last month</span>
                                     </div> -->
-                                </div>
-                            </div>
-                        </a>
-                    </div>
-                    <div class="col-xl-4 col-sm-6 col-12" id="profiles">
+                                <!-- </div> -->
+                            <!-- </div> -->
+                        <!-- </a> -->
+                    <!-- </div> -->
+                    <!-- <div class="col-xl-4 col-sm-6 col-12" id="profiles">
                         <a href="{% url 'profile_list' %}">
                             <div class="card shadow border-0">
                                 <div class="card-body">
@@ -62,17 +62,17 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <!-- <div class="mt-2 mb-0 text-sm">
+                                    <div class="mt-2 mb-0 text-sm">
                                         <span class="badge badge-pill bg-soft-success text-success me-2">
                                             <i class="fa fa-arrow-up me-1"></i>30%
                                         </span>
                                         <span class="text-nowrap text-xs text-muted">Since last month</span>
-                                    </div> -->
+                                    </div>
                                 </div>
                             </div>
                         </a>
-                    </div>
-                    <div class="col-xl-4 col-sm-6 col-12" id="sales">
+                    </div> -->
+                    <!-- <div class="col-xl-4 col-sm-6 col-12" id="sales">
                         <a href="{% url 'saleslist' %}">
                             <div class="card shadow border-0">
                                 <div class="card-body">
@@ -87,17 +87,18 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <!-- <div class="mt-2 mb-0 text-sm">
+                                    <div class="mt-2 mb-0 text-sm">
                                         <span class="badge badge-pill bg-soft-success text-success me-2">
                                             <i class="fa fa-arrow-up me-1"></i>10%
                                         </span>
                                         <span class="text-nowrap text-xs text-muted">Since last month</span>
-                                    </div> -->
+                                    </div>
                                 </div>
                             </div>
                         </a>
-                    </div>
+                    </div> -->
                 </div>
+                
 <!-- 
                 <div class="row g-6 mb-6">
                     <style>
@@ -217,6 +218,29 @@
                             text-decoration: none;
                         }
                     </style>
+                    {% if user.is_staff or user.is_superuser %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle text-success fw-medium" href="#" id="recipesDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fa-solid fa-blender me-2"></i>Recipes
+                        </a>
+                        <ul class="dropdown-menu shadow-sm rounded border border-success" aria-labelledby="recipesDropdown">
+                            <li>
+                                <a class="dropdown-item d-flex align-items-center py-2" href="{% url 'recipe_list' %}">
+                                    <i class="fa-solid fa-clipboard-list text-success me-3"></i>
+                                    <span>Recipe Management</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item d-flex align-items-center py-2" href="{% url 'recipe_generator' %}">
+                                    <i class="fa-solid fa-scale-balanced text-success me-3"></i>
+                                    <span>Recipe Generator</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                    {% endif %}
+                    <br>
+                    <br>
                     <div class="col-xl-3 col-sm-6 col-12" id="products">
                         <a href="{% url 'productslist' %}">
                             <div class="card shadow border-0">
@@ -267,14 +291,14 @@
                             </div>
                         </a>
                     </div>
-                    <div class="col-xl-3 col-sm-6 col-12" id="deliveries">
+                    <!-- <div class="col-xl-3 col-sm-6 col-12" id="deliveries">
                         <a href="{% url 'deliveries' %}">
                             <div class="card shadow border-0">
                                 <div class="card-body">
                                     <div class="row">
                                         <div class="col">
                                             <span class="h6 font-semibold text-muted text-sm d-block mb-2">Pending deliveries</span>
-                                            <span class="h3 font-bold mb-0">{{delivery.count}}</span>
+                                            <span class="h3 font-bold mb-0">{{client_counts}}</span>
                                         </div>
                                         <div class="col-auto">
                                             <div class="icon icon-shape bg-info text-white text-lg rounded-circle">
@@ -291,7 +315,7 @@
                                 </div>
                             </div>
                         </a>
-                    </div>
+                    </div> -->
                     <div class="col-xl-3 col-sm-6 col-12" id="sales">
                         <a href="{% url 'saleslist' %}">
                             <div class="card shadow border-0">
