@@ -1,5 +1,5 @@
 from django import forms
-from .models import Item, Category, Delivery, RawMaterial, Vendor, OperationsInventory
+from .models import Item, Category, Delivery, RawMaterial, Vendor, OperationsInventory, BaseRecipe, RecipeIngredient
 
 
 class ItemForm(forms.ModelForm):
@@ -127,6 +127,44 @@ class OperationsInventoryForm(forms.ModelForm):
             'description': forms.Textarea(attrs={'rows': 3}),
             'remarks': forms.Textarea(attrs={'rows': 2}),
         }
+
+
+class BaseRecipeForm(forms.ModelForm):
+    class Meta:
+        model = BaseRecipe
+        fields = ['name', 'final_product_quantity']
+
+class RecipeIngredientForm(forms.ModelForm):
+    class Meta:
+        model = RecipeIngredient
+        fields = ['raw_material', 'quantity']
+        widgets = {
+            'raw_material': forms.Select(attrs={
+                'class': 'form-control',
+                'style': 'width: 300px;'
+            }),
+            'quantity': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'style': 'width: 150px;'
+            }),
+        }
+RecipeIngredientFormSet = forms.inlineformset_factory(
+    BaseRecipe,
+    RecipeIngredient,
+    form=RecipeIngredientForm,
+    extra=1,
+    can_delete=True,
+    can_delete_extra=True
+)
+
+class RecipeGeneratorForm(forms.Form):
+    base_recipe = forms.ModelChoiceField(queryset=BaseRecipe.objects.all())
+    desired_quantity = forms.DecimalField(
+        max_digits=10, 
+        decimal_places=2,
+        min_value=0.01
+    )
+
 # class RawMaterialForm(forms.ModelForm):
 #     class Meta:
 #         model = RawMaterial

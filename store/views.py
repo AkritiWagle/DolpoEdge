@@ -18,7 +18,7 @@ from functools import reduce
 
 # Django core imports
 from django.http import HttpResponse
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse, reverse_lazy
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
@@ -28,6 +28,8 @@ from django.db.models import Q, Count, Sum
 # Authentication and permissions
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.contrib.auth.decorators import user_passes_test
+
 
 # Class-based views
 from django.views.generic import (
@@ -43,8 +45,8 @@ from django_tables2.export.views import ExportMixin
 # Local app imports
 from accounts.models import Profile, Vendor
 from transactions.models import Sale
-from .models import Category, Item, Delivery, RawMaterial, OperationsInventory
-from .forms import ItemForm, CategoryForm, DeliveryForm, RawMaterialForm, OperationsInventoryForm
+from .models import Category, Item, Delivery, RawMaterial, OperationsInventory, BaseRecipe, RecipeIngredient
+from .forms import ItemForm, CategoryForm, DeliveryForm, RawMaterialForm, OperationsInventoryForm, BaseRecipeForm, RecipeIngredientForm, RecipeIngredientFormSet, RecipeGeneratorForm
 from .tables import ItemTable
 
 
@@ -536,3 +538,94 @@ def get_items_ajax_view(request):
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=500)
     return JsonResponse({'error': 'Not an AJAX request'}, status=400)
+
+
+def admin_required(user):
+    return user.is_authenticated and (user.is_superuser or user.is_staff)
+
+@user_passes_test(admin_required)
+@user_passes_test(admin_required)
+def recipe_create(request):
+    if request.method == 'POST':
+        form = BaseRecipeForm(request.POST)
+        if form.is_valid():
+            recipe = form.save(commit=False)
+            recipe.created_by = request.user
+            recipe.save()
+            return redirect('add_ingredients', recipe_id=recipe.id)
+    else:
+        form = BaseRecipeForm()
+    return render(request, 'store/recipe_create.html', {'form': form})
+
+@user_passes_test(admin_required)
+def add_ingredients(request, recipe_id):
+    recipe = get_object_or_404(BaseRecipe, pk=recipe_id)
+    ingredients = recipe.ingredients.all()
+    
+    if request.method == 'POST':
+        form = RecipeIngredientForm(request.POST)
+        if form.is_valid():
+            ingredient = form.save(commit=False)
+            ingredient.recipe = recipe
+            ingredient.unit_of_measure = ingredient.raw_material.unit_of_measure
+            ingredient.save()
+            return redirect('add_ingredients', recipe_id=recipe.id)
+    else:
+        form = RecipeIngredientForm()
+
+    return render(request, 'store/add_ingredients.html', {
+        'recipe': recipe,
+        'form': form,
+        'ingredients': ingredients
+    })
+
+@user_passes_test(admin_required)
+def delete_ingredient(request, pk):
+    ingredient = get_object_or_404(RecipeIngredient, pk=pk)
+    recipe_id = ingredient.recipe.id
+    ingredient.delete()
+    return redirect('add_ingredients', recipe_id=recipe_id)
+
+@user_passes_test(admin_required)
+def recipe_list(request):
+    recipes = BaseRecipe.objects.all()
+    return render(request, 'store/recipe_list.html', {'recipes': recipes})
+
+@user_passes_test(admin_required)
+def recipe_delete(request, pk):
+    recipe = get_object_or_404(BaseRecipe, pk=pk)
+    if request.method == 'POST':
+        recipe.delete()
+        return redirect('recipe_list')
+    return render(request, 'store/recipe_confirm_delete.html', {'recipe': recipe})
+
+@user_passes_test(admin_required)
+def recipe_generator(request):
+    calculated = False
+    results = []
+    if request.method == 'POST':
+        form = RecipeGeneratorForm(request.POST)
+        if form.is_valid():
+            base_recipe = form.cleaned_data['base_recipe']
+            desired_quantity = form.cleaned_data['desired_quantity']
+            
+            # Calculate ratio
+            ratio = desired_quantity / base_recipe.final_product_quantity
+            
+            # Calculate scaled ingredients
+            for ingredient in base_recipe.ingredients.all():
+                scaled_quantity = ingredient.quantity * ratio
+                results.append({
+                    'raw_material': ingredient.raw_material,
+                    'quantity': scaled_quantity,
+                    'unit': ingredient.unit_of_measure,
+                })
+            calculated = True
+    else:
+        form = RecipeGeneratorForm()
+
+    return render(request, 'store/recipe_generator.html', {
+        'form': form,
+        'results': results,
+        'calculated': calculated
+    })

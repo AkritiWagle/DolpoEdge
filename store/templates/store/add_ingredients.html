@@ -1,0 +1,63 @@
+<!-- store/templates/store/add_ingredients.html -->
+{% extends "store/base.html" %}
+
+{% block content %}
+<div class="container">
+    <h2>Add Ingredients to {{ recipe.name }}</h2>
+    
+    <!-- Add Ingredient Form -->
+    <form method="post" class="mb-4">
+        {% csrf_token %}
+        <div class="form-row align-items-center">
+            <div class="col-auto">
+                {{ form.raw_material.label_tag }}
+                {{ form.raw_material }}
+            </div>
+            <div class="col-auto">
+                {{ form.quantity.label_tag }}
+                {{ form.quantity }}
+            </div>
+            <div class="col-auto">
+                <button type="submit" class="btn btn-primary mt-3">Add Ingredient</button>
+            </div>
+        </div>
+    </form>
+
+    <!-- Current Ingredients Table -->
+    <h4>Current Ingredients</h4>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Raw Material</th>
+                <th>Quantity</th>
+                <th>Unit</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for ingredient in ingredients %}
+            <tr>
+                <td>{{ ingredient.raw_material.name }}</td>
+                <td>{{ ingredient.quantity }}</td>
+                <td>{{ ingredient.unit_of_measure }}</td>
+                <td>
+                    <form method="post" action="{% url 'delete_ingredient' ingredient.id %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                    </form>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="4" class="text-center">No ingredients added yet</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="mt-4">
+        <a href="{% url 'recipe_list' %}" class="btn btn-success">Finish Recipe</a>
+        <a href="{% url 'recipe_list' %}" class="btn btn-secondary">Cancel</a>
+    </div>
+</div>
+{% endblock %}
