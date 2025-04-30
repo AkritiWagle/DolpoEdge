@@ -1,0 +1,305 @@
+    {% extends "store/base.html" %}{% load static %}{% load render_table from django_tables2 %}{% load querystring from django_tables2 %}{% block title %}Purchases{%endblock title%}
+
+    {% block content %}
+    <div class="container my-4">
+        <!-- Header Card -->
+        <div class="card shadow-sm rounded p-3 mb-4">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <h4 class="display-6 mb-0 text-success">
+                        Generate {% if report_type == 'sales' %} Sales{% else %} Purchase{% endif %} Report
+                    </h4>
+                </div>
+                <div class="col-md-6 d-flex justify-content-end">
+                    <a href="{% if report_type == 'sales' %}{% url 'sales-reports-list' %}{% else %}{% url 'purchase-reports-list' %}{% endif %}" 
+                       class="btn btn-secondary btn-sm rounded-pill shadow-sm">
+                        <i class="fa-solid fa-arrow-left"></i> Back to Reports
+                    </a>
+                </div>
+            </div>
+        </div>
+    
+        <!-- Messages -->
+        {% if messages %}
+        <div class="mb-4">
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    
+        <!-- Form Card -->
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <form method="post" id="report-form" >
+                    {% csrf_token %}
+                    
+                    <div class="row g-3">
+                        <!-- Left Column -->
+                        <div class="col-md-6">
+                            <!-- Name Field -->
+                            <div class="mb-3">
+                                <label class="form-label">{{ form.name.label }}</label>
+                                {{ form.name }}
+                                <div class="form-text text-danger">{{ form.name.errors }}</div>
+                            </div>
+    
+                            <!-- Report Type -->
+                            <div class="mb-3">
+                                <label class="form-label">{{ form.report_type.label }}</label>
+                                {{ form.report_type }}
+                            </div>
+    
+                            <!-- Customer/Vendor Field -->
+                            <div class="mb-3" id="customer-vendor-field">
+                                {% if form.customer %}
+                                    <label class="form-label">{{ form.customer.label }}</label>
+                                    {{ form.customer }}
+                                {% elif form.vendor %}
+                                    <label class="form-label">{{ form.vendor.label }}</label>
+                                    {{ form.vendor }}
+                                {% endif %}
+                            </div>
+                        </div>
+    
+                        <!-- Right Column -->
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Date Range</label>
+                                <input type="hidden" name="time_frame" value="custom">  <!-- Force custom -->
+                                <div class="row g-2">
+                                    <div class="col-6">
+                                        {{ form.start_date }}
+                                    </div>
+                                    <div class="col-6">
+                                        {{ form.end_date }}
+                                    </div>
+                                </div>
+                                <div class="form-text text-danger">
+                                    {{ form.start_date.errors }}
+                                    {{ form.end_date.errors }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+    
+                    <!-- Form Actions -->
+                    <div class="mt-4 d-flex gap-2 justify-content-end">
+                        <button type="submit" class="btn btn-success rounded-pill shadow-sm">
+                            <i class="fa-solid fa-file-export"></i> Generate & Export
+                        </button>
+                        <button type="reset" class="btn btn-outline-secondary rounded-pill shadow-sm">
+                            <i class="fa-solid fa-rotate"></i> Reset
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- JavaScript Section -->
+    <!-- <script>
+document.addEventListener('DOMContentLoaded', function() {
+    const timeFrame = document.getElementById('id_time_frame');
+    const startDate = document.getElementById('id_start_date');
+    const endDate = document.getElementById('id_end_date');
+
+    function updateDateFields() {
+        const isCustom = timeFrame.value === 'custom';
+        
+        // Set field accessibility
+        startDate.disabled = false;  // Always enable start date
+        endDate.disabled = !isCustom;
+
+        // Only calculate if not custom
+        if (!isCustom && startDate.value) {
+            const start = new Date(startDate.value);
+            const newEnd = new Date(start);
+            
+            switch(timeFrame.value) {
+                case 'daily':
+                    newEnd.setDate(start.getDate());
+                    break;
+                case 'weekly':
+                    newEnd.setDate(start.getDate() + 6);
+                    break;
+                case 'biweekly':
+                    newEnd.setDate(start.getDate() + 13);
+                    break;
+                case 'monthly':
+                    newEnd.setMonth(start.getMonth() + 1);
+                    newEnd.setDate(0);  // Last day of month
+                    break;
+                case 'quarterly':
+                    newEnd.setMonth(start.getMonth() + 3);
+                    newEnd.setDate(0);
+                    break;
+                case 'yearly':
+                    newEnd.setFullYear(start.getFullYear() + 1);
+                    newEnd.setMonth(0);
+                    newEnd.setDate(0);
+                    break;
+            }
+            
+            endDate.value = newEnd.toISOString().split('T')[0];
+        }
+    }
+
+    // Event listeners
+    timeFrame.addEventListener('change', updateDateFields);
+    startDate.addEventListener('change', updateDateFields);
+
+    // Initial setup
+    updateDateFields();
+});
+</script> -->
+<!-- <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Keep date fields always enabled
+        const startDate = document.getElementById('id_start_date');
+        const endDate = document.getElementById('id_end_date');
+        const form = document.getElementById('report-form');
+        startDate.disabled = false;
+        endDate.disabled = false;
+        
+        // errorDiv.className = 'alert alert-danger d-none mt-2';
+        // endDate.parentNode.parentNode.appendChild(errorDiv);
+
+        const reportType = document.getElementById('id_report_type');
+    const customerField = document.getElementById('id_customer');
+
+    function updateCustomerField() {
+        if (reportType.value === 'all' ) {
+            customerField.disabled = true;
+            customerField.value = '';
+            customerField.required = false;
+        } else {
+            customerField.disabled = false;
+            customerField.required = true;
+        }
+    }
+
+    // Initial update
+    updateCustomerField();
+    
+    function validateDates() {
+        const start = new Date(startDate.value);
+        const end = new Date(endDate.value);
+        errorDiv.classList.add('d-none');
+        
+        if (start && end && start > end) {
+            errorDiv.textContent = '⚠️ End date must be after start date';
+            errorDiv.classList.remove('d-none');
+            return false;
+        }
+        return true;
+    }
+
+    // Real-time validation
+    [startDate, endDate].forEach(field => {
+        field.addEventListener('change', validateDates);
+    });
+
+    // Form submission handler
+    form.addEventListener('submit', function(e) {
+        if (!validateDates()) {
+            e.preventDefault();
+            endDate.focus();
+        }
+    });
+    
+    // Update on change
+    reportType.addEventListener('change', updateCustomerField);
+
+    });
+    </script> -->
+
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Common elements
+            const form = document.getElementById('report-form');
+            const reportType = document.getElementById('id_report_type');
+            
+            // Detect if we're dealing with customer or vendor
+            const customerField = document.getElementById('id_customer');
+            const vendorField = document.getElementById('id_vendor');
+            const targetField = customerField || vendorField;
+        
+            // Date validation elements
+            const startDate = document.getElementById('id_start_date');
+            const endDate = document.getElementById('id_end_date');
+            
+            // Create error message container
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'alert alert-danger d-none mt-2';
+            if (endDate) {
+                endDate.parentNode.parentNode.appendChild(errorDiv);
+            }
+        
+            function updateFieldState() {
+                if (reportType && targetField) {
+                    if (reportType.value === 'all') {
+                        targetField.disabled = true;
+                        targetField.value = '';
+                        targetField.required = false;
+                        targetField.classList.add('disabled-field');
+                    } else {
+                        targetField.disabled = false;
+                        targetField.required = true;
+                        targetField.classList.remove('disabled-field');
+                    }
+                }
+            }
+        
+            function validateDates() {
+                if (!startDate || !endDate) return true;
+                
+                const start = new Date(startDate.value);
+                const end = new Date(endDate.value);
+                errorDiv.classList.add('d-none');
+                
+                if (start && end && start > end) {
+                    errorDiv.textContent = '⚠️ End date must be after start date';
+                    errorDiv.classList.remove('d-none');
+                    return false;
+                }
+                return true;
+            }
+        
+            // Initialize field states
+            if (startDate && endDate) {
+                startDate.disabled = false;
+                endDate.disabled = false;
+                [startDate, endDate].forEach(field => {
+                    field.addEventListener('change', validateDates);
+                });
+            }
+        
+            if (reportType && targetField) {
+                updateFieldState();
+                reportType.addEventListener('change', updateFieldState);
+            }
+        
+            if (form) {
+                form.addEventListener('submit', function(e) {
+                    if (!validateDates()) {
+                        e.preventDefault();
+                        if (endDate) endDate.focus();
+                    }
+                });
+            }
+        });
+        </script>
+        
+        <style>
+        .disabled-field {
+            background-color: #e9ecef;
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+        </style>    
+    {% endblock %}

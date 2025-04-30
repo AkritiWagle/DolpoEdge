@@ -1,0 +1,233 @@
+{% extends "store/base.html" %}
+{% load static %}
+{% block title %}Create Production Batch Record{% endblock %}
+
+{% block stylesheets %}
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="mb-4">
+        <a href="{% url 'batch-list' %}" class="btn btn-outline-success">
+            <i class="fas fa-arrow-left me-2"></i> Go back
+        </a>
+    </div>
+
+    <form method="post" id="batch-form">
+        {% csrf_token %}
+        <div class="row">
+            <!-- Left Column -->
+            <div class="col-lg-8 mb-4">
+                <div class="card border-light shadow-sm">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0">Production Details</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-4">
+                            <label class="form-label">Product:</label>
+                            <select class="form-select select2-product" name="product" required>
+                                <option value="">Select Product</option>
+                                {% for product in products %}
+                                <option value="{{ product.id }}">{{ product.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Manufacturing Date:</label>
+                                <input type="date" class="form-control" name="manufacturing_date" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Expiration Date:</label>
+                                <input type="date" class="form-control" name="expiration_date" required>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label class="form-label">Batch Quantity:</label>
+                            <input type="number" class="form-control" name="quantity" min="1" required>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label">Search Raw Materials:</label>
+                            <select class="form-select select2-raw-material" id="search-raw-materials"></select>
+                        </div>
+
+                        <div class="table-responsive my-3">
+                            <table class="table table-bordered" id="raw-material-items">
+                                <thead>
+                                    <tr>
+                                        <th>Material</th>
+                                        <th>Quantity Available</th>
+                                        <th>Quantity Used</th>
+                                        <th>Unit</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column -->
+            <div class="col-lg-4 mb-4">
+                <div class="card border-light shadow-sm">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0">Batch Details</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label">Batch Name/Number:</label>
+                            <input type="text" class="form-control" name="name" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Remarks:</label>
+                            <textarea class="form-control" name="remarks" rows="3"></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-success w-100">Create Batch</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+<script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js" defer></script>
+<script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap4.min.js" defer></script>
+
+<!-- Select2 -->
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js" defer></script>
+
+<!-- Bootstrap Touchspin -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-touchspin/3.1.0/jquery.bootstrap-touchspin.min.js" defer></script>
+
+<!-- Sweet Alert -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.15/dist/sweetalert2.all.min.js" defer></script>
+
+<script>
+$(document).ready(function() {
+    let rawMaterials = [];
+    
+    // Initialize Select2 for product selection
+    $('.select2-product').select2();
+    
+    // Initialize Select2 for raw material search
+    $('#search-raw-materials').select2({
+        ajax: {
+            url: '{% url "get_raw_materials" %}',
+            dataType: 'json',
+            delay: 250,
+            processResults: function(data) {
+                return { results: data };
+            }
+        },
+        templateResult: formatRawMaterial,
+        minimumInputLength: 1
+    }).on('select2:select', function(e) {
+        const material = e.params.data;
+        addRawMaterialItem(material);
+        $(this).val(null).trigger('change');
+    });
+
+    function formatRawMaterial(material) {
+        return $(
+            `<div class="p-2">
+                <strong>${material.text}</strong><br>
+                <small>Stock: ${material.stock} ${material.uom}</small>
+            </div>`
+        );
+    }
+
+    function addRawMaterialItem(material) {
+        const existing = rawMaterials.find(m => m.id === material.id);
+        if (existing) {
+            Swal.fire('Warning!', 'This material is already added', 'warning');
+            return;
+        }
+        
+        rawMaterials.push({
+            id: material.id,
+            name: material.text,
+            uom: material.uom,
+            stock: material.stock,
+            quantity_used: 1
+        });
+        
+        refreshMaterialsTable();
+    }
+
+    function refreshMaterialsTable() {
+        const tbody = $('#raw-material-items tbody').empty();
+        rawMaterials.forEach((material, index) => {
+            const row = `
+                <tr data-index="${index}">
+                    <td>${material.name}</td>
+                    <td>${material.stock} ${material.uom}</td>
+                    <td>
+                        <input type="number" class="form-control quantity-used" 
+                            value="${material.quantity_used}" min="1" max="${material.stock}" required>
+                    </td>
+                    <td>${material.uom}</td>
+                    <td>
+                        <button class="btn btn-danger btn-sm remove-material">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>`;
+            tbody.append(row);
+        });
+    }
+
+    $('#raw-material-items').on('input', '.quantity-used', function() {
+        const index = $(this).closest('tr').data('index');
+        rawMaterials[index].quantity_used = parseInt($(this).val());
+    });
+
+    $('#raw-material-items').on('click', '.remove-material', function(e) {
+        e.preventDefault();
+        const index = $(this).closest('tr').data('index');
+        rawMaterials.splice(index, 1);
+        refreshMaterialsTable();
+    });
+
+    $('#batch-form').on('submit', function(e) {
+        e.preventDefault();
+        
+        // Validate raw materials
+        if (rawMaterials.length === 0) {
+            Swal.fire('Error!', 'Please add at least one raw material', 'error');
+            return;
+        }
+        
+        // Prepare form data
+        const formData = new FormData(this);
+        formData.append('raw_materials', JSON.stringify(rawMaterials));
+        
+        // Submit form
+        $.ajax({
+            url: '{% url "batch-create" %}',
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function(response) {
+                Swal.fire('Success!', 'Batch created successfully', 'success')
+                   .then(() => window.location.href = '{% url "batch-list" %}');
+            },
+            error: function(xhr) {
+                Swal.fire('Error!', xhr.responseJSON.error || 'Error creating batch', 'error');
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

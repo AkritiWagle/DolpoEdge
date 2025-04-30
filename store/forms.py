@@ -1,5 +1,5 @@
 from django import forms
-from .models import Item, Category, Delivery
+from .models import Item, Category, Delivery, RawMaterial, Vendor, OperationsInventory
 
 
 class ItemForm(forms.ModelForm):
@@ -93,3 +93,50 @@ class DeliveryForm(forms.ModelForm):
                 'label': 'Mark as delivered',
             }),
         }
+
+class RawMaterialForm(forms.ModelForm):
+    class Meta:
+        model = RawMaterial
+        fields = '__all__'
+        widgets = {
+            'name': forms.TextInput(attrs={'class': 'form-control'}),
+            'vendor': forms.Select(attrs={'class': 'form-control'}),
+            'unit_of_measure': forms.TextInput(attrs={'class': 'form-control'}),
+            'unit_price': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+            'quantity': forms.NumberInput(attrs={'class': 'form-control'}),
+            'expiration_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'description': forms.Textarea(attrs={'rows': 3, 'class': 'form-control'}),
+            'remarks': forms.Textarea(attrs={'rows': 3, 'class': 'form-control'}),
+        }
+
+
+class OperationsInventoryForm(forms.ModelForm):
+    class Meta:
+        model = OperationsInventory
+        fields = [
+            'name', 
+            'type',
+            'description',
+            'unit_of_measure',
+            'quantity',
+            'unit_price',
+            'vendor',
+            'remarks'
+        ]
+        widgets = {
+            'description': forms.Textarea(attrs={'rows': 3}),
+            'remarks': forms.Textarea(attrs={'rows': 2}),
+        }
+# class RawMaterialForm(forms.ModelForm):
+#     class Meta:
+#         model = RawMaterial
+#         fields = '__all__'
+#         widgets = {
+#             'expiration_date': forms.DateInput(attrs={'type': 'date'}),
+#             'description': forms.Textarea(attrs={'rows': 3}),
+#             'remarks': forms.Textarea(attrs={'rows': 3}),
+#         }
+    
+#     def __init__(self, *args, **kwargs):
+#         super().__init__(*args, **kwargs)
+#         self.fields['vendor'].queryset = Vendor.objects.all()

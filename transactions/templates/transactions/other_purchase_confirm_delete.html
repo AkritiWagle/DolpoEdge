@@ -1,5 +1,6 @@
 {% extends "store/base.html" %}
-{% block title %}Confirm delete{% endblock %}
+{% load static %}
+
 {% block content %}
 <div class="container my-5">
     <div class="row justify-content-center">
@@ -10,18 +11,22 @@
                         <i class="fas fa-exclamation-triangle"></i> Delete Purchase
                     </h2>
                     <p class="lead">Are you sure you want to permanently delete this purchase?</p>
+                    
                     <div class="mb-4">
-                        <p class="h5">ID:{{ object.id }}</p>
-                        <p class="text-muted">Purchase Record</p>
+                        <p class="h5">{{ object.source }}</p>
+                        <div class="text-muted">
+                            <p class="mb-1">Date: {{ object.date }}</p>
+                            <p>Total Amount: ₹{{ object.grand_total }}</p>
+                        </div>
                     </div>
 
-                    <form method="POST">
+                    <form method="post">
                         {% csrf_token %}
                         <div class="d-flex justify-content-center gap-3 mt-4">
                             <button type="submit" class="btn btn-danger btn-lg">
                                 <i class="fas fa-trash"></i> Confirm Delete
                             </button>
-                            <a href="{% url 'purchaseslist' %}" class="btn btn-secondary btn-lg">
+                            <a href="{% url 'other-purchases-list' %}" class="btn btn-secondary btn-lg">
                                 <i class="fas fa-times"></i> Cancel
                             </a>
                         </div>
@@ -31,4 +36,4 @@
         </div>
     </div>
 </div>
-{% endblock content %}
+{% endblock %}

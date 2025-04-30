@@ -1,0 +1,101 @@
+{% extends "store/base.html" %}
+{% load static %}
+{% block title %}{{ report_type|title }} Reports{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+    <!-- Header Card -->
+    <div class="card shadow-sm rounded p-3">
+        <div class="row align-items-center">
+            <div class="col-md-6">
+                <h4 class="display-6 mb-0 text-success">{{ report_type|title }} Reports</h4>
+            </div>
+            <div class="col-md-6 d-flex justify-content-end gap-2">
+                <a class="btn btn-success btn-sm rounded-pill shadow-sm" 
+                   href="{% if report_type == 'sales' %}{% url 'create-sales-report' %}{% else %}{% url 'create-purchase-report' %}{% endif %}">
+                    <i class="fa-solid fa-plus"></i> Generate Report
+                </a>
+                <!-- <a class="btn btn-success btn-sm rounded-pill shadow-sm" href="#">
+                    <i class="fa-solid fa-download"></i> Export All
+                </a> -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Report List Table -->
+    <div class="card mt-4 shadow-sm">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="thead-light">
+                        <tr>
+                            <th>Report Name</th>
+                            <th>Date Range</th>
+                            <th>Type</th>
+                            <th>Created Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for report in object_list %}
+                        <tr>
+                            <td>{{ report.name }}</td>
+                            <td>{{ report.start_date|date:"Y-m-d" }} to {{ report.end_date|date:"Y-m-d" }}</td>
+                            <td>{{ report.get_report_type_display }}</td>
+                            <td>{{ report.created_at|date:"Y-m-d" }}</td>
+                            <td>
+                                <div class="d-flex gap-2">
+                                    <a href="{% url 'report-export' type=report_type pk=report.pk %}" 
+                                       class="btn btn-sm btn-success rounded-pill">
+                                        <i class="fa-solid fa-download"></i> Export
+                                    </a>
+                                    <a href="{% url 'delete-'|add:report_type|add:'-report' report.pk %}" 
+                                       class="btn btn-sm btn-danger rounded-pill">
+                                        <i class="fa-solid fa-trash"></i> Delete
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center">No {{ report_type }} reports found</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Pagination -->
+            {% if is_paginated %}
+            <div class="mt-4">
+                <nav aria-label="Page navigation">
+                    <ul class="pagination justify-content-center">
+                        {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}" aria-label="Previous">
+                                <span aria-hidden="true">&laquo;</span>
+                            </a>
+                        </li>
+                        {% endif %}
+                        
+                        {% for num in page_obj.paginator.page_range %}
+                        <li class="page-item {% if page_obj.number == num %}active{% endif %}">
+                            <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                        </li>
+                        {% endfor %}
+                        
+                        {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}" aria-label="Next">
+                                <span aria-hidden="true">&raquo;</span>
+                            </a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

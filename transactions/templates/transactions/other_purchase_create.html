@@ -1,0 +1,274 @@
+{% extends "store/base.html" %}
+{% load static %}
+{% block title %}Create Other Purchase{% endblock %}
+
+{% block stylesheets %}
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="mb-4">
+        <a href="{% url 'other-purchases-list' %}" class="btn btn-outline-success">
+            <i class="fas fa-arrow-left me-2"></i> Go back
+        </a>
+    </div>
+
+    <form id="form_other_purchase" method="post">
+        <div class="row">
+            <!-- Left Column -->
+            <div class="col-lg-8 mb-4">
+                <div class="card border-light shadow-sm">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0">Purchase Items</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-4">
+                            <label class="form-label">Search Operations Inventory:</label>
+                            <select class="form-select select2" id="search_operations_items"></select>
+                        </div>
+
+                        <div class="table-responsive my-3">
+                            <table class="table table-bordered" id="purchase_items">
+                                <thead>
+                                    <tr>
+                                        <th>Item</th>
+                                        <th>Quantity</th>
+                                        <th>Unit Price</th>
+                                        <th>Type</th>
+                                        <th>Total</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column -->
+            <div class="col-lg-4 mb-4">
+                <div class="card border-light shadow-sm">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0">Purchase Details</h5>
+                    </div>
+                    <div class="card-body">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label class="form-label">Source</label>
+                            <input type="text" 
+                                   class="form-control" 
+                                   name="source" 
+                                   list="vendorSources"
+                                   required>
+                            <datalist id="vendorSources">
+                                {% for vendor in vendor_sources %}
+                                    <option value="{{ vendor }}">
+                                {% endfor %}
+                            </datalist>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Purchase Date</label>
+                            <input type="date" class="form-control" name="date" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Remarks</label>
+                            <textarea class="form-control" name="remarks" rows="3"></textarea>
+                        </div>
+                        <hr>
+                        <div class="mb-3">
+                            <label class="form-label">Sub Total</label>
+                            <input type="number" class="form-control" id="sub_total" readonly>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Grand Total</label>
+                            <input type="number" class="form-control" id="grand_total" readonly>
+                        </div>
+                        <button type="submit" class="btn btn-success w-100">Save Purchase</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+
+
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js" defer></script>
+<script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap4.min.js" defer></script>
+
+<!-- Select2 -->
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js" defer></script>
+
+<!-- Bootstrap Touchspin -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-touchspin/3.1.0/jquery.bootstrap-touchspin.min.js" defer></script>
+
+<!-- Sweet Alert -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.15/dist/sweetalert2.all.min.js" defer></script>
+
+<script>
+$(document).ready(function() {
+    let purchaseItems = [];
+
+    // Select2 for operations items
+    $('#search_operations_items').select2({
+        ajax: {
+            url: '{% url "get_operations_inventory" %}',
+            dataType: 'json',
+            delay: 250,
+            processResults: function(data) {
+                return { results: data };
+            }
+        },
+        templateResult: formatOperationsItem,
+        minimumInputLength: 1
+    }).on('select2:select', function(e) {
+        const item = e.params.data;
+        addPurchaseItem(item);
+        $(this).val(null).trigger('change');
+    });
+
+    function formatOperationsItem(item) {
+        return $(
+            `<div class="p-2">
+                <strong>${item.text}</strong><br>
+                <small>Type: ${item.type} | Stock: ${item.stock} ${item.uom}</small>
+            </div>`
+        );
+    }
+
+    function addPurchaseItem(item) {
+        const existing = purchaseItems.find(i => i.id === item.id);
+        if (existing) {
+            Swal.fire('Warning!', 'This item is already added', 'warning');
+            return;
+        }
+        
+        purchaseItems.push({
+            id: item.id,
+            name: item.text,
+            uom: item.uom,
+            type: item.type,
+            unit_price: item.unit_price,
+            quantity: 1,
+            total: item.unit_price * 1
+        });
+        
+        refreshItemsTable();
+        calculateTotals();
+    }
+
+    function refreshItemsTable() {
+        const tbody = $('#purchase_items tbody').empty();
+        purchaseItems.forEach((item, index) => {
+            const row = `
+                <tr data-index="${index}">
+                    <td>${item.name}</td>
+                    <td>
+                        <div class="input-group">
+                            <input type="number" class="form-control quantity" 
+                                value="${item.quantity}" min="1" required>
+                            <span class="input-group-text">${item.uom}</span>
+                        </div>
+                    </td>
+                    <td><input type="number" class="form-control unit-price" 
+                         value="${item.unit_price.toFixed(2)}" step="0.01" required></td>
+                    <td>
+                        <select class="form-select type-select">
+                            <option value="stationary" ${item.type === 'stationary' ? 'selected' : ''}>Stationary</option>
+                            <option value="sanitary" ${item.type === 'sanitary' ? 'selected' : ''}>Sanitary</option>
+                            <option value="furniture" ${item.type === 'furniture' ? 'selected' : ''}>Furniture</option>
+                            <option value="equipment" ${item.type === 'equipment' ? 'selected' : ''}>Equipment</option>
+                            <option value="other" ${item.type === 'other' ? 'selected' : ''}>Other</option>
+                        </select>
+                    </td>
+                    <td class="total">${item.total.toFixed(2)}</td>
+                    <td>
+                        <button class="btn btn-danger btn-sm remove-item">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>`;
+            tbody.append(row);
+        });
+    }
+
+    function calculateTotals() {
+        const subTotal = purchaseItems.reduce((sum, item) => sum + item.total, 0);
+        $('#sub_total').val(subTotal.toFixed(2));
+        $('#grand_total').val(subTotal.toFixed(2));
+    }
+
+    $('#purchase_items').on('input', '.quantity, .unit-price', function() {
+        const row = $(this).closest('tr');
+        const index = row.data('index');
+        const quantity = parseFloat(row.find('.quantity').val()) || 0;
+        const unitPrice = parseFloat(row.find('.unit-price').val()) || 0;
+        
+        purchaseItems[index].quantity = quantity;
+        purchaseItems[index].unit_price = unitPrice;
+        purchaseItems[index].total = quantity * unitPrice;
+        row.find('.total').text(purchaseItems[index].total.toFixed(2));
+        calculateTotals();
+    });
+
+    $('#purchase_items').on('change', '.type-select', function() {
+        const index = $(this).closest('tr').data('index');
+        purchaseItems[index].type = $(this).val();
+    });
+
+    $('#purchase_items').on('click', '.remove-item', function(e) {
+        e.preventDefault();
+        const index = $(this).closest('tr').data('index');
+        purchaseItems.splice(index, 1);
+        refreshItemsTable();
+        calculateTotals();
+    });
+
+    // Form submission
+    $('#form_other_purchase').on('submit', function(e) {
+        e.preventDefault();
+        const formData = {
+            source: $('input[name="source"]').val(),
+            date: $('input[name="date"]').val(),
+            remarks: $('textarea[name="remarks"]').val(),
+            sub_total: $('#sub_total').val(),
+            grand_total: $('#grand_total').val(),
+            items: purchaseItems
+        };
+
+        // Validate required fields
+        if (!formData.source) {
+            Swal.fire('Error!', 'Please enter purchase source', 'error');
+            return;
+        }
+        if (purchaseItems.length === 0) {
+            Swal.fire('Error!', 'Please add at least one item', 'error');
+            return;
+        }
+
+        $.ajax({
+            url: '{% url "other-purchase-create" %}',
+            type: 'POST',
+            contentType: 'application/json',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            data: JSON.stringify(formData),
+            success: function(response) {
+                Swal.fire('Success!', 'Purchase saved successfully', 'success')
+                   .then(() => window.location.href = '{% url "other-purchases-list" %}');
+            },
+            error: function(xhr) {
+                Swal.fire('Error!', xhr.responseJSON.error || 'Error saving purchase', 'error');
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

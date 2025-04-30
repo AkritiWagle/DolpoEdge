@@ -165,15 +165,16 @@
             // Calculates the total for each item
             $.each(this.products.items, function (pos, dict) {
                 dict.pos = pos;
-                dict.total_item = roundTo(dict.quantity * dict.price, 2);
+                dict.total_item = roundTo(dict.quantity * dict.selling_price, 2);
                 // Add the item total to the sale subtotal
                 sub_total += roundTo(dict.total_item, 2);
             });
 
             // Update the sale subtotal, grand total, and tax amount
             this.products.sub_total = roundTo(sub_total, 2);
-            this.products.grand_total = roundTo(this.products.sub_total, 2);
             this.products.tax_amount = roundTo(this.products.sub_total * (tax_percentage / 100), 2);
+            this.products.grand_total = roundTo(this.products.sub_total, 2) + this.products.tax_amount;
+            // this.products.tax_amount = roundTo(this.products.sub_total * (tax_percentage / 100), 2);
 
             $('input[name="sub_total"]').val(this.products.sub_total);
             $('input[name="tax_amount"]').val(this.products.tax_amount);
@@ -195,7 +196,7 @@
                 columns: [
                     {"data": "number"},
                     {"data": "name"},
-                    {"data": "price"},
+                    {"data": "selling_price"},
                     {"data": "quantity"},
                     {"data": "total_item"},
                     {"data": "id"},

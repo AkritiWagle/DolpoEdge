@@ -2,7 +2,7 @@
 {% load static %}
 
 {% block title %}
-    Add Product
+    {% if object %}Update{% else %}Add{% endif %} Office Item
 {% endblock title %}
 
 {% block content %}
@@ -12,35 +12,44 @@
             <div class="card shadow-sm border-light">
                 <div class="card-body">
                     <h1 class="text-center mb-4">
-                        Update Product
+                        {% if object %}Update{% else %}Add{% endif %} Office Item
                     </h1>
                     <form method="POST" enctype="multipart/form-data">
                         {% csrf_token %}
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label for="{{ form.name.id_for_label }}" class="form-label">
-                                    Product Name
+                                    Item Name
                                 </label>
                                 {{ form.name }}
                                 <div class="text-danger">{{ form.name.errors }}</div>
                             </div>
                             <div class="col-md-6 mb-3">
-                                <label for="{{ form.category.id_for_label }}" class="form-label">
-                                    Category
+                                <label for="{{ form.type.id_for_label }}" class="form-label">
+                                    Type
                                 </label>
-                                {{ form.category }}
-                                <div class="text-danger">{{ form.category.errors }}</div>
+                                {{ form.type }}
+                                <div class="text-danger">{{ form.type.errors }}</div>
                             </div>
                         </div>
+
                         <div class="row">
-                            <div class="col mb-3">
-                                <label for="{{ form.description.id_for_label }}" class="form-label">
-                                    Description
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.unit_of_measure.id_for_label }}" class="form-label">
+                                    Unit of Measure
                                 </label>
-                                {{ form.description }}
-                                <div class="text-danger">{{ form.description.errors }}</div>
+                                {{ form.unit_of_measure }}
+                                <div class="text-danger">{{ form.unit_of_measure.errors }}</div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.unit_price.id_for_label }}" class="form-label">
+                                    Unit Price
+                                </label>
+                                {{ form.unit_price }}
+                                <div class="text-danger">{{ form.unit_price.errors }}</div>
                             </div>
                         </div>
+
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label for="{{ form.quantity.id_for_label }}" class="form-label">
@@ -50,18 +59,27 @@
                                 <div class="text-danger">{{ form.quantity.errors }}</div>
                             </div>
                             <div class="col-md-6 mb-3">
-                                <label for="{{ form.selling_price.id_for_label }}" class="form-label">
-                                    Selling Price
+                                <label for="{{ form.vendor.id_for_label }}" class="form-label">
+                                    Vendor
                                 </label>
-                                {{ form.selling_price }}
-                                <div class="text-danger">{{ form.selling_price.errors }}</div>
+                                {{ form.vendor }}
+                                <div class="text-danger">{{ form.vendor.errors }}</div>
                             </div>
                         </div>
+
                         <div class="row">
+                            <div class="col-12 mb-3">
+                                <label for="{{ form.description.id_for_label }}" class="form-label">
+                                    Description
+                                </label>
+                                {{ form.description }}
+                                <div class="text-danger">{{ form.description.errors }}</div>
+                            </div>
                         </div>
+
                         <div class="form-group text-center">
                             <button class="btn btn-success btn-lg" type="submit">
-                                <i class="fas fa-check"></i> Submit
+                                <i class="fas fa-check"></i> {% if object %}Update{% else %}Submit{% endif %}
                             </button>
                         </div>
                     </form>

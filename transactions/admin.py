@@ -53,29 +53,57 @@ class SaleDetailAdmin(admin.ModelAdmin):
 
 
 @admin.register(Purchase)
+# class PurchaseAdmin(admin.ModelAdmin):
+#     """
+#     Admin interface configuration for the Purchase model.
+#     """
+#     list_display = (
+#         'slug',
+#         'item',
+#         'vendor',
+#         'order_date',
+#         'delivery_date',
+#         'quantity',
+#         'price',
+#         'total_value',
+#         'delivery_status'
+#     )
+#     search_fields = ('item__name', 'vendor__name', 'slug')
+#     list_filter = ('order_date', 'vendor', 'delivery_status')
+#     ordering = ('-order_date',)
+#     readonly_fields = ('total_value',)
+
+#     def save_model(self, request, obj, form, change):
+#         """
+#         Save the Purchase instance and compute the total value.
+#         """
+#         obj.total_value = obj.price * obj.quantity
+#         super().save_model(request, obj, form, change)
+
 class PurchaseAdmin(admin.ModelAdmin):
-    """
-    Admin interface configuration for the Purchase model.
-    """
     list_display = (
         'slug',
-        'item',
-        'vendor',
-        'order_date',
-        'delivery_date',
-        'quantity',
-        'price',
-        'total_value',
-        'delivery_status'
+        'raw_material_vendor',
+        'date',
+        'description',
+        'sub_total',
+        'grand_total',
+        'remarks',
+        'created_at',
+        'updated_at',
     )
-    search_fields = ('item__name', 'vendor__name', 'slug')
-    list_filter = ('order_date', 'vendor', 'delivery_status')
-    ordering = ('-order_date',)
-    readonly_fields = ('total_value',)
-
-    def save_model(self, request, obj, form, change):
-        """
-        Save the Purchase instance and compute the total value.
-        """
-        obj.total_value = obj.price * obj.quantity
-        super().save_model(request, obj, form, change)
+    search_fields = (
+        'slug',
+        'raw_material_vendor__name',
+        'description',
+    )
+    list_filter = (
+        'date',
+        'raw_material_vendor',
+    )
+    ordering = ('-date',)
+    readonly_fields = (
+        'slug',
+        'created_at',
+        'updated_at',
+    )

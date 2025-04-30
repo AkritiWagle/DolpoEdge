@@ -1,0 +1,6 @@
+{% extends "transactions/report_list_base.html" %}
+{% block content %}
+    {% with report_type='sales' %}
+        {{ block.super }}
+    {% endwith %}
+{% endblock %}

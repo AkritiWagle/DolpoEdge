@@ -185,11 +185,11 @@ class Customer(models.Model):
         choices=STORE_TYPE_CHOICES,
         default='retail'
     )
-    # created_at = models.DateTimeField(auto_now_add=True)
-    # updated_at = models.DateTimeField(auto_now=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
-    created_at = models.DateTimeField(default=datetime.now)
-    updated_at = models.DateTimeField(default=datetime.now)
+    # created_at = models.DateTimeField(default=datetime.now)
+    # updated_at = models.DateTimeField(default=datetime.now)
 
     class Meta:
         db_table = 'vendor'

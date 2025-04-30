@@ -1,16 +1,29 @@
 # Standard library imports
+from decimal import Decimal
 import json
 import logging
+import os
+
 
 # Django core imports
 from django.http import JsonResponse, HttpResponse
-from django.urls import reverse
-from django.shortcuts import render
+from django.urls import reverse, reverse_lazy
+from django.shortcuts import get_object_or_404, redirect, render
 from django.db import transaction
+from django.db.models import Q
+from django.contrib import messages
+from django.core.exceptions import ValidationError
+
+from django.utils import timezone
+from datetime import timedelta
+
+
 
 # Class-based views
-from django.views.generic import DetailView, ListView
+from django.views.generic import DetailView, ListView, CreateView, DeleteView, FormView
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
+from django.views.decorators.http import require_http_methods
+
 
 # Authentication and permissions
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
@@ -19,10 +32,10 @@ from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from openpyxl import Workbook
 
 # Local app imports
-from store.models import Item
-from accounts.models import Customer
-from .models import Sale, Purchase, SaleDetail
-from .forms import PurchaseForm
+from store.models import Item,RawMaterial, Batch,OperationsInventory
+from accounts.models import Customer, Vendor
+from .models import PurchaseDetailed, Sale, Purchase, SaleDetail, OtherPurchase, OtherPurchaseDetailed, SalesReport, PurchaseReport
+from .forms import PurchaseForm, SalesReportForm, PurchaseReportForm
 
 
 logger = logging.getLogger(__name__)
@@ -117,7 +130,7 @@ def export_purchases_to_excel(request):
             delivery_date,
             purchase.quantity,
             purchase.get_delivery_status_display(),
-            purchase.price,
+            purchase.selling_price,
             purchase.total_value
         ])
 
@@ -132,6 +145,18 @@ def export_purchases_to_excel(request):
 
     return response
 
+@require_http_methods(["GET"])
+def get_raw_materials(request):
+    search = request.GET.get('q', '')
+    materials = RawMaterial.objects.filter(name__icontains=search)[:10]
+    results = [{
+        'id': m.id,
+        'text': m.name,
+        'uom': m.unit_of_measure,
+        'unit_price': str(m.unit_price),
+        'stock': m.quantity
+    } for m in materials]
+    return JsonResponse(results, safe=False)
 
 class SaleListView(LoginRequiredMixin, ListView):
     """
@@ -142,7 +167,7 @@ class SaleListView(LoginRequiredMixin, ListView):
     template_name = "transactions/sales_list.html"
     context_object_name = "sales"
     paginate_by = 10
-    ordering = ['date_added']
+    ordering = ['-id']
 
 
 class SaleDetailView(LoginRequiredMixin, DetailView):
@@ -201,7 +226,7 @@ def SaleCreateView(request):
                     for item in items:
                         if not all(
                             k in item for k in [
-                                "id", "price", "quantity", "total_item"
+                                "id", "selling_price", "quantity", "total_item"
                             ]
                         ):
                             raise ValueError("Item is missing required fields")
@@ -213,7 +238,7 @@ def SaleCreateView(request):
                         detail_attributes = {
                             "sale": new_sale,
                             "item": item_instance,
-                            "price": float(item["price"]),
+                            "price": float(item["selling_price"]),
                             "quantity": int(item["quantity"]),
                             "total_detail": float(item["total_item"])
                         }
@@ -301,6 +326,8 @@ class PurchaseListView(LoginRequiredMixin, ListView):
     template_name = "transactions/purchases_list.html"
     context_object_name = "purchases"
     paginate_by = 10
+    ordering = ['-id']
+
 
 
 class PurchaseDetailView(LoginRequiredMixin, DetailView):
@@ -312,21 +339,65 @@ class PurchaseDetailView(LoginRequiredMixin, DetailView):
     template_name = "transactions/purchasedetail.html"
 
 
-class PurchaseCreateView(LoginRequiredMixin, CreateView):
-    """
-    View to create a new purchase.
-    """
+def PurchaseCreateView(request):
+    context = {
+        "active_icon": "purchases",
+        "vendors": Vendor.objects.all(),
+        "form": PurchaseForm()
+    }
 
-    model = Purchase
-    form_class = PurchaseForm
-    template_name = "transactions/purchases_form.html"
+    if request.method == 'POST':
+        if is_ajax(request):
+            try:
+                data = json.loads(request.body)
+                logger.info(f"Received purchase data: {data}")
 
-    def get_success_url(self):
-        """
-        Redirect to the purchases list after successful form submission.
-        """
-        return reverse("purchaseslist")
+                # Validate required fields
+                required_fields = ['raw_material_vendor', 'date', 'items']
+                for field in required_fields:
+                    if field not in data:
+                        raise ValueError(f"Missing required field: {field}")
 
+                with transaction.atomic():
+                    # Create Purchase
+                    purchase = Purchase.objects.create(
+                        raw_material_vendor_id=data['raw_material_vendor'],
+                        date=data['date'],
+                        remarks=data.get('remarks', ''),
+                        sub_total=Decimal(data.get('sub_total', 0)),
+                        grand_total=Decimal(data.get('grand_total', 0))
+                    )
+
+                    # Process items
+                    for item in data['items']:
+                        raw_material = RawMaterial.objects.get(id=item['id'])
+                        
+                        # Create PurchaseDetailed entry
+                        PurchaseDetailed.objects.create(
+                            purchase=purchase,
+                            type='consumable',  # Set default or get from frontend
+                            raw_material=raw_material,
+                            unit_of_measure=raw_material.unit_of_measure,
+                            unit_price=Decimal(item['unit_price']),
+                            quantity=item['quantity'],
+                            total_price=Decimal(item['unit_price']) * item['quantity'],
+                        )
+                    # Auto-generate description
+                    purchase.update_description()
+
+                return JsonResponse({
+                    'status': 'success',
+                    'message': 'Purchase created successfully!',
+                    'redirect': '/transactions/purchases/'
+                })
+
+            except RawMaterial.DoesNotExist:
+                return JsonResponse({'status': 'error', 'message': 'One or more raw materials not found'}, status=400)
+            except Exception as e:
+                logger.error(f"Error creating purchase: {str(e)}", exc_info=True)
+                return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+
+    return render(request, "transactions/purchase_create.html", context=context)
 
 class PurchaseUpdateView(LoginRequiredMixin, UpdateView):
     """
@@ -363,3 +434,361 @@ class PurchaseDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
         Allow deletion only for superusers.
         """
         return self.request.user.is_superuser
+
+
+class BatchListView(LoginRequiredMixin, ListView):
+    model = Batch
+    template_name = "transactions/batch_list.html"
+    context_object_name = "batches"
+    paginate_by = 10
+    ordering = ['-manufacturing_date']
+
+class BatchCreateView(LoginRequiredMixin, CreateView):
+    model = Batch
+    template_name = "transactions/batch_create.html"
+    fields = []  # We'll handle fields manually
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['products'] = Item.objects.all()
+        return context
+
+    def post(self, request, *args, **kwargs):
+        try:
+            with transaction.atomic():
+                # Create Batch
+                batch = Batch.objects.create(
+                    name=request.POST.get('name'),
+                    product_id=request.POST.get('product'),
+                    manufacturing_date=request.POST.get('manufacturing_date'),
+                    expiration_date=request.POST.get('expiration_date'),
+                    quantity=int(request.POST.get('quantity')),
+                    remarks=request.POST.get('remarks', '')
+                )
+
+                # Update product quantity
+                product = batch.product
+                product.quantity += batch.quantity
+                product.save()
+
+                # Process raw materials (direct deduction)
+                raw_materials = json.loads(request.POST.get('raw_materials', '[]'))
+                for rm in raw_materials:
+                    raw_material = RawMaterial.objects.get(id=rm['id'])
+                    if raw_material.quantity < rm['quantity_used']:
+                        raise ValidationError(
+                            f"Not enough {raw_material.name} in stock. "
+                            f"Available: {raw_material.quantity}, Needed: {rm['quantity_used']}"
+                        )
+                    raw_material.quantity -= rm['quantity_used']
+                    raw_material.save()
+
+                messages.success(request, 'Batch created successfully')
+                return JsonResponse({'status': 'success'})
+        
+        except ValidationError as e:
+            return JsonResponse({'status': 'error', 'error': str(e)}, status=400)
+        except Exception as e:
+            logger.error(f"Error creating batch: {str(e)}")
+            return JsonResponse({'status': 'error', 'error': str(e)}, status=500)
+        
+from django.db.models import F
+
+class BatchDeleteView(LoginRequiredMixin, DeleteView):
+    model = Batch
+    template_name = "transactions/batch_confirm_delete.html"
+    success_url = reverse_lazy('batch-list')
+
+    def delete(self, request, *args, **kwargs):
+        try:
+            with transaction.atomic():
+                # Get batch and product FIRST
+                batch = self.get_object()
+                product = batch.product
+                quantity_to_remove = batch.quantity
+                
+                # Update product quantity using atomic operation
+                Item.objects.filter(id=product.id).update(
+                    quantity=F('quantity') - quantity_to_remove
+                )
+                
+                # Delete the batch AFTER successful product update
+                response = super().delete(request, *args, **kwargs)
+                
+                messages.success(
+                    request,
+                    f'Successfully deleted batch and removed {quantity_to_remove} units from {product.name}'
+                )
+                return response
+                
+        except Exception as e:
+            logger.error(f"Batch deletion error: {str(e)}")
+            messages.error(request, f'Error deleting batch: {str(e)}')
+            return redirect(self.success_url)
+        
+class OtherPurchaseListView(LoginRequiredMixin, ListView):
+    model = OtherPurchase
+    template_name = "transactions/other_purchase_list.html"
+    context_object_name = "purchases"
+    paginate_by = 10
+    ordering = ['-date']
+
+class OtherPurchaseCreateView(LoginRequiredMixin, CreateView):
+    model = OtherPurchase
+    template_name = "transactions/other_purchase_create.html"
+    fields = []  # Explicitly declare empty fields since we're using custom form handling
+
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Get existing vendor names + previous sources
+        vendors = Vendor.objects.values_list('name', flat=True).distinct()
+        existing_sources = OtherPurchase.objects.exclude(source__isnull=True)\
+                                                 .values_list('source', flat=True).distinct()
+        context['vendor_sources'] = list(vendors) + list(existing_sources)
+        return context
+
+    def post(self, request, *args, **kwargs):
+        try:
+            with transaction.atomic():
+                data = json.loads(request.body)
+                
+                # Create OtherPurchase
+                purchase = OtherPurchase.objects.create(
+                    source=data['source'],
+                    date=data['date'],
+                    remarks=data.get('remarks', ''),
+                    sub_total=Decimal(data['sub_total']),
+                    grand_total=Decimal(data['grand_total']),
+                    description=f"Other purchase from {data['source']}"
+                )
+
+                # Create OtherPurchaseDetailed entries
+                for item in data['items']:
+                    ops_item = OperationsInventory.objects.get(id=item['id'])
+                    OtherPurchaseDetailed.objects.create(
+                        other_purchase_id=purchase,
+                        type=item['type'],
+                        unit_of_measure=ops_item.unit_of_measure,
+                        unit_price=Decimal(item['unit_price']),
+                        quantity=item['quantity'],
+                        total_price=Decimal(item['total'])
+                    )
+                    # Update inventory
+                    ops_item.quantity += item['quantity']
+                    ops_item.save()
+
+                return JsonResponse({'status': 'success'})
+        
+        except Exception as e:
+            logger.error(f"Other purchase error: {str(e)}")
+            return JsonResponse({'status': 'error', 'error': str(e)}, status=400)
+
+class OtherPurchaseDeleteView(LoginRequiredMixin, DeleteView):
+    model = OtherPurchase
+    template_name = "transactions/other_purchase_confirm_delete.html"
+    success_url = reverse_lazy('other-purchases-list')
+
+    def delete(self, request, *args, **kwargs):
+        try:
+            with transaction.atomic():
+                purchase = self.get_object()
+                # Restore inventory quantities
+                for detail in purchase.details.all():
+                    ops_item = OperationsInventory.objects.get(id=detail.raw_material.id)
+                    ops_item.quantity -= detail.quantity
+                    ops_item.save()
+                return super().delete(request, *args, **kwargs)
+        except Exception as e:
+            messages.error(request, f'Error deleting purchase: {str(e)}')
+            return redirect(self.success_url)
+
+def get_operations_inventory(request):
+    search = request.GET.get('q', '')
+    items = OperationsInventory.objects.filter(name__icontains=search)[:10]
+    results = [{
+        'id': i.id,
+        'text': i.name,
+        'uom': i.unit_of_measure,
+        'type': i.get_type_display(),
+        'unit_price': float(i.unit_price),
+        'stock': i.quantity
+    } for i in items]
+    return JsonResponse(results, safe=False)
+
+
+class ReportBaseView(LoginRequiredMixin, FormView):
+    template_name = 'transactions/report_form.html'
+    success_url = reverse_lazy('report-results')
+    
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['initial'] = {
+            'time_frame': 'monthly',
+            'start_date': timezone.now().replace(day=1),
+            'end_date': timezone.now()
+        }
+        return kwargs
+
+    def form_valid(self, form):
+        # Store form data in session
+        self.request.session['report_data'] = {
+            'form_data': form.cleaned_data,
+            'report_type': self.report_type
+        }
+        return super().form_valid(form)
+
+class ReportMixin:
+    def get_timeframe_dates(self, time_frame):
+        today = timezone.now().date()
+        if time_frame == 'daily':
+            return today, today
+        elif time_frame == 'weekly':
+            return today - timedelta(days=7), today
+        elif time_frame == 'biweekly':
+            return today - timedelta(days=14), today
+        elif time_frame == 'monthly':
+            return today.replace(day=1), today
+        elif time_frame == 'quarterly':
+            quarter = (today.month - 1) // 3 + 1
+            start_month = 3 * quarter - 2
+            return today.replace(month=start_month, day=1), today
+        elif time_frame == 'yearly':
+            return today.replace(month=1, day=1), today
+        return None, None
+
+class SalesReportView(LoginRequiredMixin, ReportMixin, CreateView):
+    model = SalesReport
+    form_class = SalesReportForm
+    template_name = 'transactions/report_form.html'
+    success_url = reverse_lazy('sales-reports-list')  # Unique success URL
+
+
+    
+    def get_success_url(self):
+        return reverse('report-export', kwargs={'pk': self.object.pk, 'type': 'sales'})
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['report_type'] = 'sales'
+        return context
+    def form_valid(self, form):
+        # Use form.cleaned_data instead of direct POST data
+        report = form.save(commit=False)
+        report.created_by = self.request.user
+        report.save()
+        return super().form_valid(form)
+
+class PurchaseReportView(LoginRequiredMixin, ReportMixin, CreateView):
+    model = PurchaseReport
+    form_class = PurchaseReportForm
+    template_name = 'transactions/report_form.html'
+    success_url = reverse_lazy('purchase-reports-list')  # Unique success URL
+
+
+    def form_valid(self, form):
+        form.instance.created_by = self.request.user
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse('report-export', kwargs={'pk': self.object.pk, 'type': 'purchase'})
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['report_type'] = 'purchase'
+        return context
+
+class ReportListView(LoginRequiredMixin, ListView):
+    template_name = 'transactions/report_list.html'
+    
+    def get_queryset(self):
+        if self.report_type == 'sales':
+            return SalesReport.objects.filter(created_by=self.request.user)
+        return PurchaseReport.objects.filter(created_by=self.request.user)
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['report_type'] = self.report_type
+        return context
+
+class SalesReportListView(ReportListView):
+    report_type = 'sales'
+    model = SalesReport
+    template_name = 'transactions/sales_report_list.html'
+
+
+class PurchaseReportListView(ReportListView):
+    report_type = 'purchase'
+    model = PurchaseReport
+    template_name = 'transactions/purchase_report_list.html'
+
+
+class ReportDeleteView(LoginRequiredMixin, DeleteView):
+    def get_success_url(self):
+        return reverse(f'{self.report_type}-reports-list')
+    
+    def get_queryset(self):
+        if self.report_type == 'sales':
+            return SalesReport.objects.filter(created_by=self.request.user)
+        return PurchaseReport.objects.filter(created_by=self.request.user)
+
+class SalesReportDeleteView(ReportDeleteView):
+    report_type = 'sales'
+    model = SalesReport
+
+class PurchaseReportDeleteView(ReportDeleteView):
+    report_type = 'purchase'
+    model = PurchaseReport
+
+def export_report(request, pk, type):
+    # Get report object
+    if type == 'sales':
+        report = get_object_or_404(SalesReport, pk=pk)
+        qs = Sale.objects.filter(
+            date_added__date__range=[report.start_date, report.end_date]
+        )
+        if report.report_type == 'customer' and report.customer:
+            qs = qs.filter(customer=report.customer)
+    else:
+        report = get_object_or_404(PurchaseReport, pk=pk)
+        qs = Purchase.objects.filter(
+            date__range=[report.start_date, report.end_date]
+        )
+        if report.purchase_type != 'all':
+            qs = qs.filter(purchase_type=report.purchase_type)
+        if report.report_type == 'vendor' and report.vendor:
+            qs = qs.filter(vendor=report.vendor)
+
+    # Create Excel workbook
+    wb = Workbook()
+    ws = wb.active
+    ws.title = f"{type.capitalize()} Report"
+    
+    # Add headers
+    if type == 'sales':
+        headers = ['Date', 'Customer', 'Total Sales', 'Tax', 'Net Total']
+        for col_num, header in enumerate(headers, 1):
+            ws.cell(row=1, column=col_num, value=header)
+        
+        for row_num, sale in enumerate(qs, 2):
+            ws.cell(row=row_num, column=1, value=sale.date_added.date())
+            ws.cell(row=row_num, column=2, value=str(sale.customer))
+            ws.cell(row=row_num, column=3, value=float(sale.sub_total))
+            ws.cell(row=row_num, column=4, value=float(sale.tax_amount))
+            ws.cell(row=row_num, column=5, value=float(sale.grand_total))
+    else:
+        headers = ['Date', 'Vendor', 'Type', 'Total Amount']
+        for col_num, header in enumerate(headers, 1):
+            ws.cell(row=1, column=col_num, value=header)
+        
+        for row_num, purchase in enumerate(qs, 2):
+            ws.cell(row=row_num, column=1, value=purchase.date)
+            ws.cell(row=row_num, column=2, value=str(purchase.vendor))
+            ws.cell(row=row_num, column=3, value=purchase.get_purchase_type_display())
+            ws.cell(row=row_num, column=4, value=float(purchase.grand_total))
+
+    # Create response
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    filename = f"{type}_report_{report.start_date}_to_{report.end_date}.xlsx"
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    wb.save(response)
+    return response
