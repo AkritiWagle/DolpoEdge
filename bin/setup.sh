@@ -10,6 +10,7 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
+
 echo "🚀 Starting Docker containers in detached mode..."
 docker run -d -p 8000:8000 sales-and-inventory-management:1.0
 
