@@ -1,0 +1,63 @@
+{% extends "store/base.html" %}
+
+{% block content %}
+<h1>Create Base Recipe</h1>
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <fieldset>
+        <legend>Ingredients</legend>
+        {{ formset.management_form }}
+        <div id="ingredient-forms">
+            {% for form in formset %}
+                <div class="ingredient-form mb-3">
+                    {{ form.as_p }}
+                    {% if form.instance.pk %}{{ form.DELETE }}{% endif %}
+                </div>
+            {% endfor %}
+        </div>
+        <button type="button" class="btn btn-secondary" id="add-more">Add More Ingredients</button>
+    </fieldset>
+    <button type="submit" class="btn btn-primary">Save Recipe</button>
+</form>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const addMoreButton = document.getElementById('add-more');
+    const totalForms = document.getElementById('id_form-TOTAL_FORMS');
+    const ingredientForms = document.getElementById('ingredient-forms');
+    
+    let formCount = parseInt(totalForms.value);
+    
+    addMoreButton.addEventListener('click', function() {
+        const newForm = document.querySelector('.ingredient-form:last-child').cloneNode(true);
+        const formRegex = /form-(\d+)-/g;
+        
+        // Update all input attributes
+        newForm.innerHTML = newForm.innerHTML.replace(
+            formRegex, 
+            `form-${formCount}-`
+        );
+        
+        // Clear input values
+        newForm.querySelectorAll('input, select').forEach(input => {
+            if (input.name !== 'form-__prefix__-DELETE') {
+                input.value = '';
+            }
+        });
+        
+        ingredientForms.appendChild(newForm);
+        formCount++;
+        totalForms.value = formCount;
+    });
+});
+</script>
+
+<style>
+.ingredient-form { 
+    border-bottom: 1px solid #eee;
+    padding-bottom: 15px;
+    margin-bottom: 15px;
+}
+</style>
+{% endblock %}

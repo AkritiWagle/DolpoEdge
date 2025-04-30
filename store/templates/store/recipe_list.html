@@ -1,0 +1,14 @@
+{% extends "store/base.html" %}
+
+{% block content %}
+<h1>Base Recipes</h1>
+<ul>
+    {% for recipe in recipes %}
+    <li>
+        {{ recipe.name }} ({{ recipe.final_product_quantity }} units)
+        <a href="{% url 'recipe_delete' recipe.pk %}">Delete</a>
+    </li>
+    {% endfor %}
+</ul>
+<a href="{% url 'recipe_create' %}">Create New Recipe</a>
+{% endblock %}
