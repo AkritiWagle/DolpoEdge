@@ -148,6 +148,13 @@ urlpatterns = [
     path('operations-inventory/<int:pk>/update/', views.OperationsInventoryUpdateView.as_view(), name='operations-inventory-update'),
     path('operations-inventory/<int:pk>/delete/', views.OperationsInventoryDeleteView.as_view(), name='operations-inventory-delete'),
 
+     path('recipes/create/', views.recipe_create, name='recipe_create'),
+    path('recipes/', views.recipe_list, name='recipe_list'),
+    path('recipes/delete/<int:pk>/', views.recipe_delete, name='recipe_delete'),
+    path('recipe-generator/', views.recipe_generator, name='recipe_generator'),
+     path('recipes/add-ingredients/<int:recipe_id>/', views.add_ingredients, name='add_ingredients'),
+    path('delete-ingredient/<int:pk>/', views.delete_ingredient, name='delete_ingredient'),
+
 
     
 ]

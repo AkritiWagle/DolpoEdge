@@ -1,0 +1,126 @@
+{% extends "store/base.html" %}
+{% load static %}
+
+{% block title %}Create Base Recipe{% endblock title %}
+
+{% block content %}
+<div class="container">
+    <!-- Header Section -->
+    <div class="container my-4">
+        <div class="card shadow-sm rounded p-3">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <h4 class="display-6 mb-0 text-success">Create Base Recipe</h4>
+                    <p class="text-muted mb-0 mt-2">Give a recipe name and add quantity, then save to configure ingredients</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Form Section -->
+    <div class="card shadow-sm rounded p-4">
+        <form method="post">
+            {% csrf_token %}
+            <div class="row g-3 mb-4">
+                <!-- Main Form Fields -->
+                {% for field in form %}
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label class="form-label">{{ field.label }}</label>
+                        {{ field }}
+                        {% if field.help_text %}
+                        <small class="form-text text-muted">{{ field.help_text }}</small>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Ingredients Section -->
+            <fieldset class="border p-3 rounded">
+                <legend class="w-auto px-3 fs-6 text-success">Save To Go To Ingredients</legend>
+                {{ formset.management_form }}
+                <div id="ingredient-forms" class="mb-3">
+                    {% for form in formset %}
+                    <div class="ingredient-form card mb-3 p-3 shadow-sm">
+                        <div class="row g-3">
+                            {% for field in form.visible_fields %}
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    {% if field.name != 'DELETE' %}
+                                    <label class="form-label">{{ field.label }}</label>
+                                    {% endif %}
+                                    {{ field }}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center">
+                    <!-- <button type="button" class="btn btn-outline-success rounded-pill shadow-sm" id="add-more">
+                        <i class="fa-solid fa-plus me-2"></i>Add Ingredient
+                    </button> -->
+                    <button type="submit" class="btn btn-success rounded-pill shadow-sm">
+                        <i class="fa-solid fa-floppy-disk me-2"></i>Save Recipe
+                    </button>
+                </div>
+            </fieldset>
+        </form>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const addMoreButton = document.getElementById('add-more');
+    const totalForms = document.getElementById('id_form-TOTAL_FORMS');
+    const ingredientForms = document.getElementById('ingredient-forms');
+    
+    let formCount = parseInt(totalForms.value);
+    
+    addMoreButton.addEventListener('click', function() {
+        const lastForm = document.querySelector('.ingredient-form:last-child');
+        const newForm = lastForm.cloneNode(true);
+        const formRegex = /form-(\d+)-/g;
+        
+        // Update all input attributes
+        newForm.innerHTML = newForm.innerHTML.replace(
+            formRegex, 
+            `form-${formCount}-`
+        );
+        
+        // Clear input values
+        newForm.querySelectorAll('input, select').forEach(input => {
+            if (input.name !== 'form-__prefix__-DELETE') {
+                input.value = '';
+                input.removeAttribute('value');
+                if (input.type === 'select-one') {
+                    input.selectedIndex = 0;
+                }
+            }
+        });
+        
+        ingredientForms.appendChild(newForm);
+        formCount++;
+        totalForms.value = formCount;
+    });
+});
+</script>
+
+<style>
+.ingredient-form {
+    transition: transform 0.2s ease-in-out;
+}
+.ingredient-form:hover {
+    transform: translateX(5px);
+}
+.form-group label {
+    font-weight: 500;
+}
+select.form-control {
+    appearance: auto;
+}
+</style>
+{% endblock %}

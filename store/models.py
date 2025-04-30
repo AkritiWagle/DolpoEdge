@@ -21,6 +21,8 @@ from accounts.models import Vendor
 from django.core.exceptions import ValidationError
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
+from django.contrib.auth import get_user_model
+
 
 
 
@@ -167,6 +169,88 @@ class RawMaterial(models.Model):
 
     def __str__(self):
         return f"{self.name} ({self.quantity} {self.unit_of_measure})"
+class BaseRecipe(models.Model):
+    name = models.CharField(max_length=255, unique=True)
+    final_product_quantity = models.DecimalField(max_digits=10, decimal_places=2)
+    created_by = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.name
+
+class RecipeIngredient(models.Model):
+    recipe = models.ForeignKey(BaseRecipe, on_delete=models.CASCADE, related_name='ingredients')
+    raw_material = models.ForeignKey('RawMaterial', on_delete=models.CASCADE)
+    quantity = models.DecimalField(max_digits=10, decimal_places=2)
+    
+    # Store unit of measure at time of recipe creation
+    unit_of_measure = models.CharField(max_length=20)
+
+    class Meta:
+        unique_together = ('recipe', 'raw_material')
+
+    def __str__(self):
+        return f"{self.raw_material.name} - {self.quantity} {self.unit_of_measure}"
+
+class Insight(models.Model):
+    INSIGHT_TYPE_CHOICES = [
+        ('sales_trend', 'Sales Trend'),
+        ('top_selling', 'Top Selling'),
+        ('vendor_performance', 'Vendor Performance'),
+        ('other', 'Other'),
+    ]
+    
+    insight_type = models.CharField(
+        max_length=20,
+        choices=INSIGHT_TYPE_CHOICES,
+        default='other'
+    )
+    related_entity_type = models.ForeignKey(
+        ContentType,
+        on_delete=models.CASCADE,
+        limit_choices_to={'model__in': ['item', 'vendor']},
+    )
+    related_entity_id = models.PositiveIntegerField()
+    related_entity = GenericForeignKey('related_entity_type', 'related_entity_id')
+    metric = models.CharField(max_length=255)
+    value = models.FloatField()
+    calculated_date = models.DateTimeField(auto_now_add=True)
+    remarks = models.TextField(blank=True, null=True)
+
+    def clean(self):
+        # Validate entity type matches allowed models
+        if self.related_entity_type.model not in ['item', 'vendor']:
+            raise ValidationError("Related entity must be an Item or Vendor.")
+        
+        # Validate insight-type and entity compatibility
+        if self.insight_type == 'vendor_performance' and self.related_entity_type.model != 'vendor':
+            raise ValidationError("Vendor insights must link to a Vendor.")
+        if self.insight_type == 'top_selling' and self.related_entity_type.model != 'item':
+            raise ValidationError("Top Selling insights must link to a Product.")
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
+        
+        # Create an alert for this insight
+        Alerts.objects.create(
+            alert_type='insight',  # Requires adding 'insight' to Alerts.ALERT_TYPES
+            related_item_type=self.related_entity_type.model,
+            content_type=self.related_entity_type,
+            object_id=self.related_entity_id,
+            description=f"Insight: {self.get_insight_type_display()} ({self.metric}={self.value})",
+            priority='notice',
+            status='pending'
+        )
+
+    def __str__(self):
+        return f"{self.insight_type} - {self.metric}"
+
+    class Meta:
+        db_table = 'insights'
+        ordering = ['-calculated_date']
+
 
 #operations inventory table
 
