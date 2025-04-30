@@ -12,9 +12,9 @@
                 <a class="btn btn-success btn-sm rounded-pill shadow-sm" href="{% url 'purchase-create' %}">
                     <i class="fa-solid fa-plus"></i> Add Purchase Order
                 </a>
-                <a class="btn btn-success btn-sm rounded-pill shadow-sm" href="{% url 'purchases-export' %}">
+                <!-- <a class="btn btn-success btn-sm rounded-pill shadow-sm" href="{% url 'purchases-export' %}">
                     <i class="fa-solid fa-download"></i> Export to Excel
-                </a>
+                </a> -->
             </div>
         </div>
     </div>
@@ -51,9 +51,9 @@
                 <td>{{ purchase.remarks}}</td>
                 
                 <td>
-                    <a class="text-info" href="{% url 'purchase-update' purchase.id %}">
+                    <!-- <a class="text-info" href="{% url 'purchase-update' purchase.id %}">
                         <i class="fa-solid fa-pen"></i>
-                    </a>
+                    </a> -->
                     <a class="text-danger float-end" href="{% url 'purchase-delete' purchase.id %}">
                         <i class="fa-solid fa-trash"></i>
                     </a>
