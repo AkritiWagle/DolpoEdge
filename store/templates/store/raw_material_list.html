@@ -16,9 +16,9 @@
                     <a class="btn btn-success btn-sm rounded-pill shadow-sm" href="{% url 'raw-material-create' %}">
                         <i class="fa-solid fa-plus"></i> Add Material
                     </a>
-                    <a class="btn btn-success btn-sm rounded-pill shadow-sm" href="{% querystring '_export'='xlsx' %}">
+                    <!-- <a class="btn btn-success btn-sm rounded-pill shadow-sm" href="{% querystring '_export'='xlsx' %}">
                         <i class="fa-solid fa-download"></i> Export to Excel
-                    </a>
+                    </a> -->
                 </div>
             </div>
             <form class="input-group mt-4" role="search" id="searchform" action="{% url 'raw-material-list' %}" method="get">                <input id="searchbox" name="q" type="text" class="form-control border-0 rounded-pill shadow-sm" placeholder="Find raw materials">
