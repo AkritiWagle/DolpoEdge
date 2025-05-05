@@ -19,6 +19,7 @@ from django_extensions.db.fields import AutoSlugField
 from phonenumber_field.modelfields import PhoneNumberField
 from accounts.models import Vendor
 from django.core.exceptions import ValidationError
+from django.core.validators import MinValueValidator
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.auth import get_user_model
@@ -57,6 +58,7 @@ class Item(models.Model):
     description = models.TextField(max_length=256)
     category = models.ForeignKey(Category, on_delete=models.CASCADE)
     quantity = models.IntegerField(default=0)
+    validators=[MinValueValidator(0)]
     # price = models.FloatField(default=0)
     selling_price = models.FloatField(default=0, verbose_name='Selling Price')
 
